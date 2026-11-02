@@ -1,0 +1,10 @@
+bin/
+obj/
+agent_build/
+mongo-data/
+
+.vs/
+*.user
+*.suo
+
+.DS_Store
