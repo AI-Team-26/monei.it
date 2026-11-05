@@ -1,6 +1,7 @@
 bin/
 obj/
 agent_build/
+TestResults/
 mongo-data/
 
 .vs/
