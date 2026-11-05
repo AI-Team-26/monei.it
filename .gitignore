@@ -1,0 +1,11 @@
+bin/
+obj/
+agent_build/
+TestResults/
+mongo-data/
+
+.vs/
+*.user
+*.suo
+
+.DS_Store
