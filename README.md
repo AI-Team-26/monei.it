@@ -35,8 +35,9 @@ final dockerized application, so we use the same one from day one.
 
 - Data lives in `./mongo-data` (bind mount), so it survives container recreation and image updates.
 - Start it with `docker compose up -d` (service definition in `docker-compose.yml`).
-- Connection string: `mongodb://monei:monei-dev-password@localhost:27017/?authSource=admin`
-  (local development credentials only).
+- Connection string: `mongodb://monei:monei-dev-password@localhost:27017/monei?authSource=admin`
+  (local development credentials only; `authSource=admin` is required because the root user created
+  by `MONGO_INITDB_ROOT_*` lives in the `admin` database).
 - `./mongo-data` is git-ignored — never commit the database files.
 
 The desktop app connects to this local database. `docker-compose.yml` is there to raise the
