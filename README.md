@@ -39,4 +39,5 @@ final dockerized application, so we use the same one from day one.
   (local development credentials only).
 - `./mongo-data` is git-ignored — never commit the database files.
 
-The reasoning and the rejected alternatives are in [docs/database-location.md](docs/database-location.md).
+The desktop app connects to this local database. `docker-compose.yml` is there to raise the
+database on the local machine only: it is not a server deployment and nothing is hosted remotely.
