@@ -14,3 +14,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: monei-Dev-Password-1
+    volumes:
+      - ${SQL_DATA_PATH:-./sql-data}:/var/opt/mssql
+      - ${SQL_BACKUP_PATH:-./sql-backup}:/var/opt/mssql/backup

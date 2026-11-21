@@ -3,7 +3,6 @@
 ## Backlog
 - Feature 6 [feat/06_restore_dump] Restore the MongoDB dump into the Docker bind-mounted data folder.
 - Feature 8 | Add GitHub workflow for Build and Test teh app
-- Feature 9 | Prepare a dcument for backup and resore of a SQL Server database (instead of the MongoDB)
 - Feature 10 | Database will be SQL Server.
   Discovered that the original database is SQL Server.
   Update README, TODO.
@@ -16,3 +15,4 @@
 - Feature 4 [feat/04_skeleton] Scaffold the solution: Core + NUnit tests + Docker MongoDB (WPF shell moved to Feature 5).
 - Feature 5 [feat/05_wpf_shell] WPF app shell with DI and MongoDB wiring.
 - Feature 7 [feat/07_docker_compose] Prepare docker-compose for local MongoDB with bind-mounted data volume and configurable path via .env.
+- Feature 9 [docs/09_sql_server_backup_restore] Doc for backup of the VPS SQL Server and restore into a local SQL Server container.
