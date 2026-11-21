@@ -3,6 +3,8 @@ obj/
 agent_build/
 TestResults/
 mongo-data/
+sql-data/
+sql-backup/
 
 .vs/
 *.user
