@@ -1,5 +1,6 @@
 namespace Monei.Core.Entities;
 
+/// <summary>Domain entity for a financial transaction. Used by TransactionRepository.</summary>
 public sealed class Transaction
 {
     public string Id { get; set; } = string.Empty;
