@@ -4,6 +4,10 @@
 - Feature 6 [feat/06_restore_dump] Restore the MongoDB dump into the Docker bind-mounted data folder.
 - Feature 8 | Add GitHub workflow for Build and Test teh app
 - Feature 9 | Prepare a dcument for backup and resore of a SQL Server database (instead of the MongoDB)
+- Feature 10 | Database will be SQL Server.
+  Discovered that the original database is SQL Server.
+  Update README, TODO.
+  Prepare tasks to replace the MongoDB Repository, configuration and all the reqiuired changes. Small steps.
 
 ## Done
 - Feature 3 [docs/03_db_backup] Doc for the one-time migration dump from the VPS to the local Docker MongoDB (`docs/db-migration.md`).
