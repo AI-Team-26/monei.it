@@ -1,0 +1,15 @@
+bin/
+obj/
+agent_build/
+TestResults/
+mongo-data/
+
+.vs/
+*.user
+*.suo
+
+.DS_Store
+
+.env
+.idea/
+*.DotSettings.user
