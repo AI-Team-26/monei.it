@@ -17,7 +17,7 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    restart: "no"
+    restart: unless-stopped
     ports:
       - "127.0.0.1:1433:1433"
     environment:

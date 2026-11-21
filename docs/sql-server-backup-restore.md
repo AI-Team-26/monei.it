@@ -104,6 +104,9 @@ The `sqlserver` service in `docker-compose.yml`:
   with no copy inside the container;
 - the data folder bind-mounted at `/var/opt/mssql`, so the restored database survives container
   recreation;
+- `restart: unless-stopped`: this is the real data for everyday use, so once started the container
+  comes back by itself after a PC reboot. `docker compose stop sqlserver` stops it until you start it
+  again;
 - user `sa` with the local development password `monei-Dev-Password-1`.
 
 Wait for the server to be ready:

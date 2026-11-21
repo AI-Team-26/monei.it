@@ -42,7 +42,7 @@ final dockerized application, so we use the same one from day one.
 
 The old website keeps its data in **SQL Server** on the VPS. `docs/sql-server-backup-restore.md`
 explains how to take a `.bak` backup there and restore it into a local SQL Server container
-(`docker compose up -d sqlserver`). That container is only for the data copy; the app does not use it.
+(`docker compose up -d sqlserver`), which keeps the real data on the PC.
 
 The desktop app connects to this local database. `docker-compose.yml` is there to raise the
 database on the local machine only: it is not a server deployment and nothing is hosted remotely.
