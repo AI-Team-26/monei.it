@@ -1,29 +1,14 @@
 services:
-  mongodb:
-    image: mongo:8.0
-    restart: "no"
-    ports:
-      - "127.0.0.1:27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: monei
-      MONGO_INITDB_ROOT_PASSWORD: monei-dev-password
-    volumes:
-      - ${MONGO_DATA_PATH}:/data/db
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04
     restart: unless-stopped
     ports:
       - "127.0.0.1:1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_PID: Developer
-      MSSQL_SA_PASSWORD: monei-Dev-Password-1
+      MSSQL_PID: Admin
+      MSSQL_SA_PASSWORD: monei-Local-Password-1
     volumes:
-      - ${SQL_DATA_PATH:-./sql-data}:/var/opt/mssql
-      - ${SQL_BACKUP_PATH:-./sql-backup}:/var/opt/mssql/backup
+      - ${SQL_DATA_PATH:?Missed SQL_DATA_PATH}:/var/opt/mssql
+      - ${SQL_BACKUP_PATH:?Missed SQL_BACKUP_PATH}:/var/opt/mssql/backup
