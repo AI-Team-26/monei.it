@@ -21,7 +21,8 @@ the web app, the API and the mobile app are built on top of the same data.
 
 - **Desktop app:** WPF, C# on .NET 10 LTS (upgrade to .NET 11 when it reaches GA)
 - **MVVM:** CommunityToolkit.Mvvm
-- **Data access:** Microsoft.Data.SqlClient + Dapper with the repository pattern
+- **Data access:** EF Core (`Microsoft.EntityFrameworkCore.SqlServer`) with the repository pattern.
+  The entities are scaffolded from the existing database; no migrations until the schema needs to change.
 - **Tests:** NUnit + Moq
 - **Development database:** SQL Server 2025 in Docker, data kept on the host via a bind-mounted volume (`./sql-data`)
 - **Packaging:** self-contained single-file `.exe`

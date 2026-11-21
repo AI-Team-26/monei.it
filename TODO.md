@@ -1,9 +1,9 @@
 # TODO
 
 ## Backlog
-- Feature 11 [feat/11_sql_data_access] Replace MongoDB data access with SQL Server (Dapper + Microsoft.Data.SqlClient).
-  First inspect the restored schema and map `Transaction` to the real table.
-  In Core: delete `MongoRepository` and `MongoDbSettings`, rewrite `TransactionRepository` with SQL, add `SqlServerSettings`.
+- Feature 11 [feat/11_sql_data_access] Replace MongoDB data access with SQL Server (EF Core, `Microsoft.EntityFrameworkCore.SqlServer`).
+  First inspect the restored schema, then scaffold the DbContext/entities from it (database-first, no migrations).
+  In Core: delete `MongoRepository` and `MongoDbSettings`, rewrite `TransactionRepository` on the DbContext, add `SqlServerSettings`.
   In Desktop: rewire DI in `App.xaml.cs` and `appsettings.json` (same PR, so the solution keeps building).
   Update `SkeletonTests` and package references.
 - Feature 12 [feat/12_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
