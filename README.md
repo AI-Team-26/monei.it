@@ -23,7 +23,7 @@ the web app, the API and the mobile app are built on top of the same data.
 - **MVVM:** CommunityToolkit.Mvvm
 - **Data access:** Microsoft.Data.SqlClient + Dapper with the repository pattern
 - **Tests:** NUnit + Moq
-- **Development database:** SQL Server 2022 in Docker, data kept on the host via a bind-mounted volume (`./sql-data`)
+- **Development database:** SQL Server 2025 in Docker, data kept on the host via a bind-mounted volume (`./sql-data`)
 - **Packaging:** self-contained single-file `.exe`
 - **UI language:** English
 
@@ -33,13 +33,13 @@ The database is **SQL Server**. The old website already keeps its data in SQL Se
 VPS, so we keep the same database engine and the existing schema: no data conversion, no new
 schema design.
 
-The development database is **SQL Server 2022 running locally in Docker**. It is not embedded,
+The development database is **SQL Server 2025 running locally in Docker**. It is not embedded,
 not in the cloud and not installed on the host: containers are the deployment unit we want for
 the final dockerized application, so we use the same one from day one.
 
 - Start it with `docker compose up -d sqlserver` (service definition in `docker-compose.yml`).
 - Data lives in `./sql-data` (bind mount), so it survives container recreation and image updates.
-- Connection string: `Server=localhost,1433;Database=monei;User Id=sa;Password=monei-Dev-Password-1;TrustServerCertificate=True`
+- Connection string: `Server=localhost,1433;Database=monei;User Id=sa;Password=monei-Local-Password-1;TrustServerCertificate=True`
   (local development credentials only).
 - `./sql-data` and `./sql-backup` are git-ignored — never commit the database files.
 

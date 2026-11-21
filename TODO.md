@@ -6,9 +6,8 @@
   In Core: delete `MongoRepository` and `MongoDbSettings`, rewrite `TransactionRepository` with SQL, add `SqlServerSettings`.
   In Desktop: rewire DI in `App.xaml.cs` and `appsettings.json` (same PR, so the solution keeps building).
   Update `SkeletonTests` and package references.
-- Feature 12 [feat/12_remove_mongodb] Remove MongoDB leftovers: `mongodb` service in `docker-compose.yml`,
-  `MongoDB.Driver` in `Directory.Packages.props`, `MONGO_DATA_PATH` in `.env.example`, `mongo-data/` in `.gitignore`,
-  MongoDB mention in `docs/sql-server-backup-restore.md` troubleshooting.
+- Feature 12 [feat/12_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
+  (only after Feature 11) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
 
 ## Done
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
