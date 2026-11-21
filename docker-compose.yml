@@ -1,8 +1,7 @@
 services:
   mongodb:
     image: mongo:8.0
-    container_name: monei-mongodb
-    restart: unless-stopped
+    restart: "no"
     ports:
       - "127.0.0.1:27017:27017"
     environment:
@@ -10,3 +9,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: monei-dev-password
     volumes:
       - ./mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 10

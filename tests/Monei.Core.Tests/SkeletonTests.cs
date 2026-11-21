@@ -19,7 +19,7 @@ public class SkeletonTests
     [Test]
     public async Task Repository_Can_Be_Mocked()
     {
-        var repository = new Mock<IRepository<SampleEntity>>();
+        var repository = new Mock<IRepository<SampleEntity, string>>();
         repository
             .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<SampleEntity>());

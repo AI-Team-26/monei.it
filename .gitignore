@@ -9,3 +9,7 @@ mongo-data/
 *.suo
 
 .DS_Store
+
+.env
+.idea/
+*.DotSettings.user
