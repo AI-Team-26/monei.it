@@ -2,7 +2,7 @@
 
 The old monei.it website keeps its data in **SQL Server** on a Windows VPS. To work with real
 data locally, we take a `.bak` backup on the VPS, copy it to the PC and restore it into
-**SQL Server 2022 running in Docker** on the PC.
+**SQL Server 2025 running in Docker** on the PC.
 
 SQL Server Management Studio **18.1** is installed on the VPS, so the backup can be done by
 mouse. Every step also has a T-SQL version, for the cases where the mouse is not enough.
@@ -32,7 +32,7 @@ SELECT @@VERSION, SERVERPROPERTY('Edition') AS Edition, SERVERPROPERTY('ProductM
 
 **The restore rule:** a backup can be restored into the **same or a newer** SQL Server version,
 never into an older one. If the VPS runs an older version than the container, the restore fails.
-The container uses SQL Server 2022, so a 2012 or newer backup restores fine. For an older VPS,
+The container uses SQL Server 2025, so a 2012 or newer backup restores fine. For an older VPS,
 change the image tag in `docker-compose.yml`.
 
 **Backup compression** is not available in SQL Server **Express**. The edition query above tells
@@ -98,7 +98,7 @@ docker compose up -d sqlserver
 
 The `sqlserver` service in `docker-compose.yml`:
 
-- image `mcr.microsoft.com/mssql/server:2022-latest`, Developer edition;
+- image `mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04`, Developer edition;
 - port `127.0.0.1:1433` on the PC;
 - `./sql-backup` bind-mounted at `/var/opt/mssql/backup`, so the `.bak` is visible to the server
   with no copy inside the container;
@@ -107,7 +107,7 @@ The `sqlserver` service in `docker-compose.yml`:
 - `restart: unless-stopped`: this is the real data for everyday use, so once started the container
   comes back by itself after a PC reboot. `docker compose stop sqlserver` stops it until you start it
   again;
-- user `sa` with the local development password `monei-Dev-Password-1`.
+- user `sa` with the local development password `monei-Local-Password-1`.
 
 Wait for the server to be ready:
 
@@ -122,7 +122,7 @@ Connect from SSMS on the PC:
 
 - Server name: `localhost,1433` (comma, not colon)
 - Authentication: SQL Server Authentication
-- Login: `sa`, password: `monei-Dev-Password-1`
+- Login: `sa`, password: `monei-Local-Password-1`
 - Tick **Trust server certificate** (the container uses a self-signed certificate)
 
 ## 6. Restore into the container
@@ -163,7 +163,7 @@ access or invalid path error.
 
 ```bash
 docker compose exec sqlserver \
-  /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P monei-Dev-Password-1 \
+  /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P monei-Local-Password-1 \
   -Q "RESTORE FILELISTONLY FROM DISK = N'/var/opt/mssql/backup/monei.bak'"
 ```
 
@@ -205,5 +205,5 @@ copy, take no chances:
 | `The database cannot be restored ... because the database was backed up on a server running version X` | The container is **older** than the VPS. Use a newer image tag. |
 | `Operating system error ... on file "C:\...\monei.mdf"` while restoring | The MOVE paths are missing or still Windows paths. Keep them under `/var/opt/mssql`. |
 | `Login failed for user 'sa'` | Wrong password, or the container was started earlier with a different one. The password is set only when the data folder is empty: remove `./sql-data` and start again. |
-| The container stops right after start | Not enough memory. SQL Server needs 2 GB; give Docker more memory or stop the MongoDB container meanwhile. |
+| The container stops right after start | Not enough memory. SQL Server needs 2 GB; give Docker more memory or stop other containers meanwhile. |
 | `The server must be started with permission ...` or a permission error on `/var/opt/mssql` right after start | Only on a Linux host: the bound data folder must belong to user `10001:10001`. Run `sudo chown -R 10001:10001 ./sql-data`. Windows hosts with Docker Desktop do not have this problem. |
