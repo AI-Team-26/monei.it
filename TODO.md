@@ -1,15 +1,19 @@
 # TODO
 
 ## Backlog
-- Feature 6 [feat/06_restore_dump] Restore the MongoDB dump into the Docker bind-mounted data folder.
-- Feature 10 | Database will be SQL Server.
-  Discovered that the original database is SQL Server.
-  Update README, TODO.
-  Prepare tasks to replace the MongoDB Repository, configuration and all the reqiuired changes. Small steps.
+- Feature 11 [feat/11_sql_data_access] Replace MongoDB data access with SQL Server (Dapper + Microsoft.Data.SqlClient).
+  First inspect the restored schema and map `Transaction` to the real table.
+  In Core: delete `MongoRepository` and `MongoDbSettings`, rewrite `TransactionRepository` with SQL, add `SqlServerSettings`.
+  In Desktop: rewire DI in `App.xaml.cs` and `appsettings.json` (same PR, so the solution keeps building).
+  Update `SkeletonTests` and package references.
+- Feature 12 [feat/12_remove_mongodb] Remove MongoDB leftovers: `mongodb` service in `docker-compose.yml`,
+  `MongoDB.Driver` in `Directory.Packages.props`, `MONGO_DATA_PATH` in `.env.example`, `mongo-data/` in `.gitignore`,
+  MongoDB mention in `docs/sql-server-backup-restore.md` troubleshooting.
 
 ## Done
+- Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
 - Feature 8 [feat/08_github_workflow] Add GitHub workflow for Build and Test the app.
-- Feature 3 [docs/03_db_backup] Doc for the one-time migration dump from the VPS to the local Docker MongoDB (`docs/db-migration.md`).
+- Feature 3 [docs/03_db_backup] One-time migration dump doc (removed later: the old database is SQL Server, not MongoDB).
 - Feature 1 [docs/01_desktop_tech] Decide the technology to use for the desktop app: WPF + .NET 10 LTS, CommunityToolkit.Mvvm, MongoDB.Driver, NUnit + Moq.
 - Feature 2 [docs/02_db_location] Decide where to keep the database for the first release: local MongoDB 8 in Docker with a `./mongo-data` bind mount; README explains the desktop-first porting path to the dockerized web app + API for mobile.
 - Feature 4 [feat/04_skeleton] Scaffold the solution: Core + NUnit tests + Docker MongoDB (WPF shell moved to Feature 5).
