@@ -10,5 +10,5 @@ services:
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: monei-Local-Password-1
     volumes:
-      - ${SQL_DATA_PATH:-./sql-data}:/var/opt/mssql
-      - ${SQL_BACKUP_PATH:-./sql-backup}:/var/opt/mssql/backup
+      - "${SQL_DATA_PATH:?SQL_DATA_PATH is not set. Copy .env.example to .env}:/var/opt/mssql"
+      - "${SQL_BACKUP_PATH:?SQL_BACKUP_PATH is not set. Copy .env.example to .env}:/var/opt/mssql/backup"
