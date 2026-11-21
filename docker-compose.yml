@@ -7,7 +7,7 @@ services:
       - "127.0.0.1:1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_PID: Admin
+      MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: monei-Local-Password-1
     volumes:
       - ${SQL_DATA_PATH:?Missed SQL_DATA_PATH}:/var/opt/mssql
