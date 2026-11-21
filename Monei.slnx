@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Monei.Core/Monei.Core.csproj" />
+    <Project Path="src/Monei.Desktop/Monei.Desktop.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Monei.Core.Tests/Monei.Core.Tests.csproj" />

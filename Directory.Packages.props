@@ -4,9 +4,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Consumed by the WPF app shell, added in a follow-up PR -->
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
     <PackageVersion Include="Moq" Version="4.21.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
