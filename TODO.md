@@ -2,6 +2,7 @@
 
 ## Backlog
 - Feature 6 [feat/06_restore_dump] Restore the MongoDB dump into the Docker bind-mounted data folder.
+- Feature 8 | Add GitHub workflow for Build and Test teh app
 
 ## Done
 - Feature 3 [docs/03_db_backup] Doc for the one-time migration dump from the VPS to the local Docker MongoDB (`docs/db-migration.md`).
