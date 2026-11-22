@@ -2,8 +2,10 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04
-    restart: unless-stopped
-    user: root  # mssql user has issues with bind-mount volumes
+    # - unless-stopped = unlimited restarts, forever. That is what turned a 1-in-100 startup bug into a disk eater.
+    # - on-failure:3 = restart only on a non-zero exit, at most 3 times, then give up.
+    restart: on-failure:3
+    #user: root  # mssql user has issues with bind-mount volumes but root doesn't solbve it
     ports:
       - "127.0.0.1:1433:1433"
     environment:
@@ -11,5 +13,11 @@ services:
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: monei-Local-Password-1
     volumes:
-      - "${SQL_DATA_PATH:?SQL_DATA_PATH is not set. Copy .env.example to .env}:/var/opt/mssql"
-      - "${SQL_BACKUP_PATH:?SQL_BACKUP_PATH is not set. Copy .env.example to .env}:/var/opt/mssql/backup"
+      - type: bind
+        #source: /d/Databases/SQLServer/monei
+        source: \\wsl.localhost\Ubuntu\Databases\monei
+        target: /var/opt/mssql
+    #entrypoint:
+    #  - /bin/bash
+    #  - -c
+    #  - "id; ls -lan /var/opt/mssql; echo ---; ls -lan /var/opt/mssql/secrets; sleep infinity"

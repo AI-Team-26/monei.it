@@ -52,3 +52,69 @@ Replacing it with SQL Server data access is tracked in `TODO.md` (Features 11 an
 
 The desktop app connects to this local database. `docker-compose.yml` is there to raise the
 database on the local machine only: it is not a server deployment and nothing is hosted remotely.
+
+### SQL Server crash loop (known upstream bug)
+
+A known SQL Server 2025 bug ([mssql-docker#974](https://github.com/microsoft/mssql-docker/issues/974))
+sometimes kills the container during startup, before it opens its errorlog. Symptoms:
+
+- the container restarts again and again;
+- `./sql-data/log` grows fast: a ~1.3 GB dump per crash, 30-40 GB in minutes;
+- `docker compose logs` shows `[AppLoader] Failed to load LSA: 0xc0070102`.
+
+What we do about it:
+
+- `./sql-data/mssql.conf` turns the automatic dumps off with `[coredump] disablecoredump = true`.
+  A crash then costs a few KB. The file must be saved **without BOM**, otherwise SQL Server
+  ignores it (`head -c 3 ./sql-data/mssql.conf | od -An -tx1` must not print `ef bb bf`).  
+  (You can copy it from _docs/mssql.conf_)
+- Restarts are capped at three tries, so a loop stops by itself:
+  `docker update --restart=on-failure:3 "$(docker compose ps -a -q sqlserver)"`.
+  Compose recreates the container when the compose file changes, so re-apply this after a
+  `down` / `up`.
+- Delete dumps left by an old loop with `rm -rf ./sql-data/log/core.sqlservr.*`.
+
+The image is pinned to the `ubuntu-22.04` base because the `ubuntu-24.04` one hits this bug more
+often. Move back to 24.04 when SQL Server 2025 CU12 ships the fix.
+
+
+### Bind mount: use WSL2
+
+   **Bind mount on the Windows filesystem does not work.**
+   SQL Server 2025 cannot start when `/var/opt/mssql` is a bind mount from a Windows drive:
+   the LSA subsystem fails (`Failed to load LSA: 0xc0070102`) and the container crash-loops.
+   See microsoft/mssql-docker#974.
+
+   A bind mount from WSL2 works, because there the data sits on a real Linux filesystem (ext4).
+
+   Assuming the WSL2 distribution is called "Ubuntu", this is the path as seen from Windows Explorer:
+
+       __\\wsl.localhost\Ubuntu\Databases\monei__
+  
+In the WSL2 shell:  
+```sh
+sudo mkdir -p /Databases/monei
+# 10001 = mssql inside the container (not 10002). Bind mounts pass numbers, not names.
+# -R    = apply to the folder and everything inside it.
+# 755   = owner reads/writes/enters; others may list and enter, but not write.
+sudo chown -R 10001:10001 /Databases/monei
+sudo chmod 755 /Databases/monei
+
+# copy mssql.conf in /Databases/monei/mssql.conf
+# sudo cp <project path>/docs/mssql.conf /Databases/monei/
+# 644   = owner read/write; everyone else can read only
+sudo chown 10001:10001 /Databases/monei/mssql.conf
+sudo chmod 644 /Databases/monei/mssql.conf
+```
+
+For the backup file, once hte database is up and running:
+```sh
+sudo mkdir -p /Databases/monei/backup
+sudo chown 10001:10001 /Databases/monei/backup
+
+# copy the database backup file
+# sudo cp <project path>/docs/monei.bak /Databases/monei/backup/
+```
+
+then folow the instruction in _docs/sql-server-backup-restore.md_.
+

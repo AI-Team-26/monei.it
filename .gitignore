@@ -1,10 +1,11 @@
+.env
+# backup file
+docs/monei.bak
+
 bin/
 obj/
 agent_build/
 TestResults/
-mongo-data/
-sql-data/
-sql-backup/
 
 .vs/
 *.user
@@ -12,6 +13,5 @@ sql-backup/
 
 .DS_Store
 
-.env
 .idea/
 *.DotSettings.user
