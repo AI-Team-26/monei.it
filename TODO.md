@@ -1,13 +1,20 @@
 # TODO
 
 ## Backlog
-- Feature 11 [feat/11_sql_data_access] Replace MongoDB data access with SQL Server (EF Core, `Microsoft.EntityFrameworkCore.SqlServer`).
-  First inspect the restored schema, then scaffold the DbContext/entities from it (database-first, no migrations).
-  In Core: delete `MongoRepository` and `MongoDbSettings`, rewrite `TransactionRepository` on the DbContext, add `SqlServerSettings`.
-  In Desktop: rewire DI in `App.xaml.cs` and `appsettings.json` (same PR, so the solution keeps building).
-  Update `SkeletonTests` and package references.
+- Feature 11 [feat/11_sql_data_access] EF Core data access in Core, mapped by hand from the restored SQL Server database
+  (database-first, no migrations, `Microsoft.EntityFrameworkCore.SqlServer`).
+  Tables: `Registry` (the transactions, entity `RegistryEntry`), `Account`, `Category`, `Subcategory`.
+  `Registry.OperationType` is `smallint`: `-1` Outcome, `0` Transfer, `1` Income.
+  Add `Data/MoneiDbContext.cs`, `Data/Entities/` (4 files), `Configuration/SqlServerSettings.cs`; delete the placeholder
+  `Entities/Transaction.cs`; rewrite `TransactionRepository` on the DbContext; replace the Mongo settings test in `SkeletonTests`.
+  The MongoDB code stays in place, unused, so Desktop keeps building.
+- Feature 13 [feat/13_desktop_sql_wiring] Point the desktop app at SQL Server and remove the Mongo code:
+  DI in `App.xaml.cs`, connection string in `appsettings.json` (`Server=localhost,1433;Database=monei;...`),
+  delete `MongoRepository` and `MongoDbSettings`. Needs Feature 11.
 - Feature 12 [feat/12_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
-  (only after Feature 11) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
+  (only after Feature 13) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
+- Bug 16 [fix/16_plaintext_passwords] `User.Password` and `Account.Password` hold plain text passwords.
+  Choose the hashing and the migration path before go-live.
 
 ## Done
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
