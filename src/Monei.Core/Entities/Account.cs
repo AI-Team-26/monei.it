@@ -16,5 +16,5 @@ public sealed class Account
 
     public DateTime? LastChangeDate { get; set; }
 
-    public System.Guid Guid { get; set; }
+    public Guid Guid { get; set; }
 }

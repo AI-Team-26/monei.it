@@ -1,6 +1,7 @@
 # TODO
 
 ## Backlog
+- Bug 17 [fix/17_ef_smoke_test] Automated check for the EF model and `RegistryEntryRepository` (model smoke test without a DB, and an integration test for `GetByDateRangeAsync` against the local SQL Server).
 - Feature 12 [feat/12_desktop_sql_wiring] Point the desktop app at SQL Server and remove the Mongo code:
   DI in `App.xaml.cs`, connection string in `appsettings.json` (`Server=localhost,1433;Database=monei;...`),
   delete `MongoRepository` and `MongoDbSettings`. Needs Feature 11.2.
