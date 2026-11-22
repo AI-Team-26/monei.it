@@ -15,7 +15,7 @@ services:
     volumes:
       - type: bind
         #source: /d/Databases/SQLServer/monei
-        source: \\wsl.localhost\Ubuntu\Databases\monei
+        source: ${SQL_DATA_PATH:?SQL_DATA_PATH needs to be configured in .env}
         target: /var/opt/mssql
     #entrypoint:
     #  - /bin/bash
