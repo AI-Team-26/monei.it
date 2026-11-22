@@ -3,12 +3,17 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04
     restart: unless-stopped
+    user: root  # mssql user has issues with bind-mount volumes
     ports:
       - "127.0.0.1:1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_PID: Admin
+      MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: monei-Local-Password-1
     volumes:
-      - ${SQL_DATA_PATH:?Missed SQL_DATA_PATH}:/var/opt/mssql
+    #- sql-data:/var/opt/mssql    #
+      - ${SQL_DATA_PATH:?Missed SQL_DATA_PATH}:/var/opt/mssql      
       - ${SQL_BACKUP_PATH:?Missed SQL_BACKUP_PATH}:/var/opt/mssql/backup
+
+#volumes:
+# sql-data:
