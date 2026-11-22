@@ -12,7 +12,7 @@ the web app, the API and the mobile app are built on top of the same data.
 
 ## Roadmap
 
-1. **Desktop app** (now) — WPF on .NET 10, talks to MongoDB directly, single `.exe` for Windows.
+1. **Desktop app** (now) — WPF on .NET 10, talks to SQL Server directly, single `.exe` for Windows.
 2. **Web app + API** (next) — dockerized .NET service serving the web UI and exposing an API
    for the mobile app.
 3. **Mobile app** (later) — consumes the same API.
@@ -21,28 +21,34 @@ the web app, the API and the mobile app are built on top of the same data.
 
 - **Desktop app:** WPF, C# on .NET 10 LTS (upgrade to .NET 11 when it reaches GA)
 - **MVVM:** CommunityToolkit.Mvvm
-- **Data access:** MongoDB.Driver with the repository pattern
+- **Data access:** EF Core (`Microsoft.EntityFrameworkCore.SqlServer`) with the repository pattern.
+  The entities are scaffolded from the existing database; no migrations until the schema needs to change.
 - **Tests:** NUnit + Moq
-- **Development database:** MongoDB in Docker, data kept on the host via a bind-mounted volume (`./mongo-data`)
+- **Development database:** SQL Server 2025 in Docker, data kept on the host via a bind-mounted volume (`./sql-data`)
 - **Packaging:** self-contained single-file `.exe`
 - **UI language:** English
 
 ## Database
 
-The development database is **MongoDB 8 running locally in Docker**. It is not embedded, not
-in the cloud and not installed on the host: containers are the deployment unit we want for the
-final dockerized application, so we use the same one from day one.
+The database is **SQL Server**. The old website already keeps its data in SQL Server on the
+VPS, so we keep the same database engine and the existing schema: no data conversion, no new
+schema design.
 
-- Data lives in `./mongo-data` (bind mount), so it survives container recreation and image updates.
-- Start it with `docker compose up -d` (service definition in `docker-compose.yml`).
-- Connection string: `mongodb://monei:monei-dev-password@localhost:27017/monei?authSource=admin`
-  (local development credentials only; `authSource=admin` is required because the root user created
-  by `MONGO_INITDB_ROOT_*` lives in the `admin` database).
-- `./mongo-data` is git-ignored — never commit the database files.
+The development database is **SQL Server 2025 running locally in Docker**. It is not embedded,
+not in the cloud and not installed on the host: containers are the deployment unit we want for
+the final dockerized application, so we use the same one from day one.
 
-The old website keeps its data in **SQL Server** on the VPS. `docs/sql-server-backup-restore.md`
-explains how to take a `.bak` backup there and restore it into a local SQL Server container
-(`docker compose up -d sqlserver`), which keeps the real data on the PC.
+- Start it with `docker compose up -d sqlserver` (service definition in `docker-compose.yml`).
+- Data lives in `./sql-data` (bind mount), so it survives container recreation and image updates.
+- Connection string: `Server=localhost,1433;Database=monei;User Id=sa;Password=monei-Local-Password-1;TrustServerCertificate=True`
+  (local development credentials only).
+- `./sql-data` and `./sql-backup` are git-ignored — never commit the database files.
+
+`docs/sql-server-backup-restore.md` explains how to take a `.bak` backup on the VPS and restore
+it into the local container, which keeps the real data on the PC.
+
+The code still contains the MongoDB repository and wiring written before this decision.
+Replacing it with SQL Server data access is tracked in `TODO.md` (Features 11 and 12).
 
 The desktop app connects to this local database. `docker-compose.yml` is there to raise the
 database on the local machine only: it is not a server deployment and nothing is hosted remotely.
