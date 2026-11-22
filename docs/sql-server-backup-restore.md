@@ -2,7 +2,7 @@
 
 The old monei.it website keeps its data in **SQL Server** on a Windows VPS. To work with real
 data locally, we take a `.bak` backup on the VPS, copy it to the PC and restore it into
-**SQL Server 2025 running in Docker** on the PC.
+**SQL Server running in Docker** on the PC.
 
 SQL Server Management Studio **18.1** is installed on the VPS, so the backup can be done by
 mouse. Every step also has a T-SQL version, for the cases where the mouse is not enough.
@@ -32,8 +32,8 @@ SELECT @@VERSION, SERVERPROPERTY('Edition') AS Edition, SERVERPROPERTY('ProductM
 
 **The restore rule:** a backup can be restored into the **same or a newer** SQL Server version,
 never into an older one. If the VPS runs an older version than the container, the restore fails.
-The container uses SQL Server 2025, so a 2012 or newer backup restores fine. For an older VPS,
-change the image tag in `docker-compose.yml`.
+The container version is the image tag in `docker-compose.yml`. Keep it at or above the VPS
+version; a newer container always accepts an older backup.
 
 **Backup compression** is not available in SQL Server **Express**. The edition query above tells
 you: drop `COMPRESSION` when the VPS runs Express.
@@ -98,7 +98,7 @@ docker compose up -d sqlserver
 
 The `sqlserver` service in `docker-compose.yml`:
 
-- image `mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04`, Developer edition;
+- the image pinned in `docker-compose.yml` (`mcr.microsoft.com/mssql/server`, Developer edition);
 - port `127.0.0.1:1433` on the PC;
 - `./sql-backup` bind-mounted at `/var/opt/mssql/backup`, so the `.bak` is visible to the server
   with no copy inside the container;
