@@ -39,6 +39,12 @@ not in the cloud and not installed on the host: containers are the deployment un
 the final dockerized application, so we use the same one from day one.
 
 - Start it with `docker compose up -d sqlserver` (service definition in `docker-compose.yml`).
+- Crash dumps are off (`mssql/mssql.conf`). A known SQL Server 2025 startup bug
+  ([mssql-docker#974](https://github.com/microsoft/mssql-docker/issues/974)) crashes the container
+  before its errorlog exists, and every crash writes a ~1.3 GB dump. Dumps land in
+  `./sql-data/log`: clean them with `rm -rf ./sql-data/log/core.sqlservr.*`.
+- The container is capped at 3 restart tries (`restart: on-failure:3`), so a crash loop stops
+  instead of filling the disk. Start it again with `docker compose up -d sqlserver`.
 - Data lives in `./sql-data` (bind mount), so it survives container recreation and image updates.
 - Connection string: `Server=localhost,1433;Database=monei;User Id=sa;Password=monei-Local-Password-1;TrustServerCertificate=True`
   (local development credentials only).

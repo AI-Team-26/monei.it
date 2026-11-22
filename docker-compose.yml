@@ -1,8 +1,10 @@
 services:
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04
-    restart: unless-stopped
+    # The 22.04 base hits the known SQL Server 2025 startup crash much less often than 24.04.
+    # Move back to 24.04 once SQL Server 2025 CU12 is out with the fix.
+    image: mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-22.04
+    restart: on-failure:3
     user: root  # mssql user has issues with bind-mount volumes
     ports:
       - "127.0.0.1:1433:1433"
@@ -13,3 +15,4 @@ services:
     volumes:
       - "${SQL_DATA_PATH:?SQL_DATA_PATH is not set. Copy .env.example to .env}:/var/opt/mssql"
       - "${SQL_BACKUP_PATH:?SQL_BACKUP_PATH is not set. Copy .env.example to .env}:/var/opt/mssql/backup"
+      - "./mssql/mssql.conf:/var/opt/mssql/mssql.conf"

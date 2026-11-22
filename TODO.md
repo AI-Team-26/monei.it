@@ -10,6 +10,7 @@
   (only after Feature 11) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
 
 ## Done
+- Fix 14 [fix/14_sql_server_coredump] Stop SQL Server crash dumps from filling the disk: dumps off, restart capped at 3 tries, 22.04 base image.
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
 - Feature 8 [feat/08_github_workflow] Add GitHub workflow for Build and Test the app.
 - Feature 3 [docs/03_db_backup] One-time migration dump doc (removed later: the old database is SQL Server, not MongoDB).
