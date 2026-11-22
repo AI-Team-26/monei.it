@@ -7,8 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
 using Monei.Core.Configuration;
+using Monei.Core.Data;
 using Monei.Core.Repositories;
-using Monei.Core.Entities;
 
 namespace Monei.Desktop;
 
@@ -49,9 +49,14 @@ public partial class App : Application
 
             services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoSettings.ConnectionString));
             services.AddSingleton(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(mongoSettings.DatabaseName));
+
+            var sqlServerSettings = configuration.GetSection(SqlServerSettings.SectionName).Get<SqlServerSettings>()
+                ?? new SqlServerSettings();
+
+            services.AddSingleton(_ => new MoneiDbContext(sqlServerSettings.ConnectionString));
         }
 
-        services.AddTransient<TransactionRepository>();
+        services.AddTransient<RegistryEntryRepository>();
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
     }
