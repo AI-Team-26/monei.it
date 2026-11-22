@@ -1,8 +1,6 @@
 # TODO
 
 ## Backlog
-- Feature 11.1 [feat/11.1_ef_core_package] Add the EF Core SQL Server package: `Microsoft.EntityFrameworkCore.SqlServer`
-  in `Directory.Packages.props` and `Monei.Core.csproj`. Nothing else.
 - Feature 11.2 [feat/11.2_sql_data_access] EF Core data access in Core, mapped by hand from the restored SQL Server database
   (database-first, no migrations).
   Tables: `Registry` (the transactions, entity `RegistryEntry`), `Account`, `Category`, `Subcategory`.
@@ -19,6 +17,7 @@
   Choose the hashing and the migration path before go-live.
 
 ## Done
+- Feature 11.1 [feat/11.1_ef_core_package] `Microsoft.EntityFrameworkCore.SqlServer` added to Core, with a pinned `System.Security.Cryptography.Pkcs` because `Microsoft.Data.SqlClient` pulls a vulnerable version.
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
 - Feature 8 [feat/08_github_workflow] Add GitHub workflow for Build and Test the app.
 - Feature 3 [docs/03_db_backup] One-time migration dump doc (removed later: the old database is SQL Server, not MongoDB).
