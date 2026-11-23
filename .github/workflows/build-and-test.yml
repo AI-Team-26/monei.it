@@ -25,3 +25,23 @@ jobs:
 
       - name: Run tests
         run: dotnet test Monei.slnx --no-build -c Release --verbosity normal
+        
+  desktop-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+      - name: Build desktop app
+        run: dotnet build src/Monei.Desktop/Monei.Desktop.csproj -c Release
+      - name: "Smoke test: app starts and stays alive"
+        shell: pwsh
+        run: |
+          $exe = "src/Monei.Desktop/bin/Release/net10.0-windows/Monei.Desktop.exe"
+          $proc = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 15
+          if ($proc.HasExited) {
+            Write-Error "App exited at startup (code $($proc.ExitCode))"
+            exit 1
+          }
+          Write-Host "App alive after 15s - smoke test passed"
+          Stop-Process -Id $proc.Id -Force
