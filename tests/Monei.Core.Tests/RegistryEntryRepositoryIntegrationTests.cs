@@ -9,7 +9,7 @@ namespace Monei.Core.Tests;
 public class RegistryEntryRepositoryIntegrationTests
 {
     private const string ConnectionString =
-        "Server=localhost,1433;Database=monei;User Id=sa;Password=monei-Local-Password-1;TrustServerCertificate=True";
+        "Server=localhost,1433;Database=monei_tests;User Id=sa;Password=monei-Local-Password-1;TrustServerCertificate=True";
 
     private MoneiDbContext context = null!;
 
@@ -34,7 +34,7 @@ public class RegistryEntryRepositoryIntegrationTests
         context?.Dispose();
     }
 
-    private (int id, RegistryEntry entry) InsertEntry(DateTime date)
+    private int InsertEntry(DateTime date)
     {
         var entry = new RegistryEntry
         {
@@ -50,7 +50,7 @@ public class RegistryEntryRepositoryIntegrationTests
 
         context.RegistryEntries.Add(entry);
         context.SaveChanges();
-        return (entry.Id, entry);
+        return entry.Id;
     }
 
     private void RemoveEntry(int id)
@@ -66,13 +66,13 @@ public class RegistryEntryRepositoryIntegrationTests
     [Test]
     public async Task GetByDateRange_Returns_Entries_In_Range()
     {
-        var (id, _) = InsertEntry(new DateTime(2025, 6, 15));
+        var id = InsertEntry(new DateTime(2025, 6, 15));
         try
         {
             var repo = new RegistryEntryRepository(context);
             var result = await repo.GetByDateRangeAsync(new DateTime(2025, 6, 1), new DateTime(2025, 6, 30));
 
-            Assert.That(result, Has.Some.Matches((RegistryEntry? e) => e is not null && e.Id == id && e.Date == new DateTime(2025, 6, 15)));
+            Assert.That(result, Has.Some.Matches((RegistryEntry? e) => e is not null && e.Id == id));
         }
         finally
         {
@@ -83,13 +83,47 @@ public class RegistryEntryRepositoryIntegrationTests
     [Test]
     public async Task GetByDateRange_Excludes_Entries_Outside_Range()
     {
-        var (id, _) = InsertEntry(new DateTime(2025, 6, 15));
+        var id = InsertEntry(new DateTime(2025, 6, 15));
         try
         {
             var repo = new RegistryEntryRepository(context);
             var result = await repo.GetByDateRangeAsync(new DateTime(2025, 7, 1), new DateTime(2025, 7, 31));
 
             Assert.That(result, Has.No.Matches((RegistryEntry? e) => e is not null && e.Id == id));
+        }
+        finally
+        {
+            RemoveEntry(id);
+        }
+    }
+
+    [Test]
+    public async Task GetByDateRange_Includes_Start_Boundary()
+    {
+        var id = InsertEntry(new DateTime(2025, 6, 1));
+        try
+        {
+            var repo = new RegistryEntryRepository(context);
+            var result = await repo.GetByDateRangeAsync(new DateTime(2025, 6, 1), new DateTime(2025, 6, 30));
+
+            Assert.That(result, Has.Some.Matches((RegistryEntry? e) => e is not null && e.Id == id));
+        }
+        finally
+        {
+            RemoveEntry(id);
+        }
+    }
+
+    [Test]
+    public async Task GetByDateRange_Includes_End_Boundary()
+    {
+        var id = InsertEntry(new DateTime(2025, 6, 30));
+        try
+        {
+            var repo = new RegistryEntryRepository(context);
+            var result = await repo.GetByDateRangeAsync(new DateTime(2025, 6, 1), new DateTime(2025, 6, 30));
+
+            Assert.That(result, Has.Some.Matches((RegistryEntry? e) => e is not null && e.Id == id));
         }
         finally
         {

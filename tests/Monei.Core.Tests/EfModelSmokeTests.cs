@@ -1,4 +1,5 @@
 using Monei.Core.Data;
+using Monei.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
@@ -23,46 +24,51 @@ public class EfModelSmokeTests
     public void RegistryEntry_Maps_To_Registry_Table()
     {
         using var context = CreateContext();
-        var entityType = context.Model.FindEntityType(typeof(Monei.Core.Entities.RegistryEntry))!;
+        var found = context.Model.FindEntityType(typeof(RegistryEntry));
+        Assert.That(found, Is.Not.Null);
+        var entityType = found!;
 
         Assert.That(entityType.GetTableName(), Is.EqualTo("Registry"));
-        Assert.That(entityType.FindProperty(nameof(Monei.Core.Entities.RegistryEntry.Id))!.GetColumnName() is not null, Is.True);
+        Assert.That(entityType.FindPrimaryKey(), Is.Not.Null);
     }
 
     [Test]
     public void RegistryEntry_Amount_Is_Decimal()
     {
         using var context = CreateContext();
-        var entityType = context.Model.FindEntityType(typeof(Monei.Core.Entities.RegistryEntry))!;
-        var property = entityType.FindProperty(nameof(Monei.Core.Entities.RegistryEntry.Amount))!;
+        var entityType = context.Model.FindEntityType(typeof(RegistryEntry))!;
+        var property = entityType.FindProperty(nameof(RegistryEntry.Amount))!;
 
-        Assert.That(property.GetColumnType(), Does.Contain("decimal"));
+        Assert.That(property.GetColumnType(), Is.EqualTo("decimal(12,5)"));
     }
 
     [Test]
     public void Account_Maps_To_Account_Table()
     {
         using var context = CreateContext();
-        var entityType = context.Model.FindEntityType(typeof(Monei.Core.Entities.Account))!;
+        var entityType = context.Model.FindEntityType(typeof(Account));
 
-        Assert.That(entityType.GetTableName(), Is.EqualTo("Account"));
+        Assert.That(entityType, Is.Not.Null);
+        Assert.That(entityType!.GetTableName(), Is.EqualTo("Account"));
     }
 
     [Test]
     public void Category_Maps_To_Category_Table()
     {
         using var context = CreateContext();
-        var entityType = context.Model.FindEntityType(typeof(Monei.Core.Entities.Category))!;
+        var entityType = context.Model.FindEntityType(typeof(Category));
 
-        Assert.That(entityType.GetTableName(), Is.EqualTo("Category"));
+        Assert.That(entityType, Is.Not.Null);
+        Assert.That(entityType!.GetTableName(), Is.EqualTo("Category"));
     }
 
     [Test]
     public void Subcategory_Maps_To_Subcategory_Table()
     {
         using var context = CreateContext();
-        var entityType = context.Model.FindEntityType(typeof(Monei.Core.Entities.Subcategory))!;
+        var entityType = context.Model.FindEntityType(typeof(Subcategory));
 
-        Assert.That(entityType.GetTableName(), Is.EqualTo("Subcategory"));
+        Assert.That(entityType, Is.Not.Null);
+        Assert.That(entityType!.GetTableName(), Is.EqualTo("Subcategory"));
     }
 }
