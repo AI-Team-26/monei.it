@@ -1,7 +1,6 @@
 # TODO
 
 ## Backlog
-- Bug 17 [fix/17_ef_smoke_test] Automated check for the EF model and `RegistryEntryRepository` (model smoke test without a DB, and an integration test for `GetByDateRangeAsync` against the local SQL Server).
 - Feature 12 [feat/12_desktop_sql_wiring] Point the desktop app at SQL Server and remove the Mongo code:
   DI in `App.xaml.cs`, connection string in `appsettings.json` (`Server=localhost,1433;Database=monei;...`),
   delete `MongoRepository` and `MongoDbSettings`. Needs Feature 11.2.
@@ -11,6 +10,7 @@
   Choose the hashing and the migration path before go-live.
 
 ## Done
+- Bug 17 [fix/17_getbydaterange_itest] Integration test for `RegistryEntryRepository.GetByDateRangeAsync`: builds the schema from the EF model into a throwaway database on the local SQL Server, checks inclusive range filtering, drops the database after.
 - Bug 19 [fix/19_startupuri] `App.xaml` used `StartupUri`, which requires a default `MainWindow` constructor; the window is now created via DI in `OnStartup`.
 - Bug 18 [fix/18_appxaml_bad_resource] `App.xaml` merged a nonexistent `CommunityToolkit.Mvvm` `Styles.xaml`, crashing the app at startup with a XamlParseException.
 - Feature 11.1 [feat/11.1_ef_core_package] `Microsoft.EntityFrameworkCore.SqlServer` added to Core, with a pinned `System.Security.Cryptography.Pkcs` because `Microsoft.Data.SqlClient` pulls a vulnerable version.
