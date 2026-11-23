@@ -17,6 +17,7 @@
   Choose the hashing and the migration path before go-live.
 
 ## Done
+- Bug 18 [fix/18_appxaml_bad_resource] `App.xaml` merged a nonexistent `CommunityToolkit.Mvvm` `Styles.xaml`, crashing the app at startup with a XamlParseException.
 - Feature 11.1 [feat/11.1_ef_core_package] `Microsoft.EntityFrameworkCore.SqlServer` added to Core, with a pinned `System.Security.Cryptography.Pkcs` because `Microsoft.Data.SqlClient` pulls a vulnerable version.
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
 - Feature 8 [feat/08_github_workflow] Add GitHub workflow for Build and Test the app.
