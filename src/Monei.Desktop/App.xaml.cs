@@ -53,7 +53,7 @@ public partial class App : Application
             var sqlServerSettings = configuration.GetSection(SqlServerSettings.SectionName).Get<SqlServerSettings>()
                 ?? new SqlServerSettings();
 
-            // Connection string is empty until Feature 12 adds the "SqlServer" section to appsettings.json.
+            // The connection string is empty until the "SqlServer" section is added to appsettings.json.
             services.AddSingleton(_ => new MoneiDbContext(sqlServerSettings.ConnectionString));
         }
 
