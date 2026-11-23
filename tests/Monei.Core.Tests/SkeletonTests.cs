@@ -8,12 +8,11 @@ namespace Monei.Core.Tests;
 public class SkeletonTests
 {
     [Test]
-    public void MongoDbSettings_Defaults_Are_Empty()
+    public void SqlServerSettings_Default_Is_Empty()
     {
-        var settings = new MongoDbSettings();
+        var settings = new SqlServerSettings();
 
         Assert.That(settings.ConnectionString, Is.Empty);
-        Assert.That(settings.DatabaseName, Is.Empty);
     }
 
     [Test]
