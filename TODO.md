@@ -7,10 +7,9 @@
   delete `MongoRepository` and `MongoDbSettings`. Needs Feature 11.2.
 - Feature 13 [feat/13_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
   (only after Feature 12) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
-- Bug 16 [fix/16_plaintext_passwords] `User.Password` and `Account.Password` hold plain text passwords.
-  Choose the hashing and the migration path before go-live.
 
 ## Done
+- Bug 16 [fix/16_plaintext_passwords] `Account.Password` now hashed with PBKDF2 (HMAC-SHA256, 10k iterations, per-password salt). Migration path: SQL script widens column to nvarchar(128), existing rows require password reset.
 - Bug 19 [fix/19_startupuri] `App.xaml` used `StartupUri`, which requires a default `MainWindow` constructor; the window is now created via DI in `OnStartup`.
 - Bug 18 [fix/18_appxaml_bad_resource] `App.xaml` merged a nonexistent `CommunityToolkit.Mvvm` `Styles.xaml`, crashing the app at startup with a XamlParseException.
 - Feature 11.1 [feat/11.1_ef_core_package] `Microsoft.EntityFrameworkCore.SqlServer` added to Core, with a pinned `System.Security.Cryptography.Pkcs` because `Microsoft.Data.SqlClient` pulls a vulnerable version.
