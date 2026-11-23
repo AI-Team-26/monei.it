@@ -17,6 +17,7 @@
   Choose the hashing and the migration path before go-live.
 
 ## Done
+- Bug 19 [fix/19_startupuri] `App.xaml` used `StartupUri`, which requires a default `MainWindow` constructor; the window is now created via DI in `OnStartup`.
 - Bug 18 [fix/18_appxaml_bad_resource] `App.xaml` merged a nonexistent `CommunityToolkit.Mvvm` `Styles.xaml`, crashing the app at startup with a XamlParseException.
 - Feature 11.1 [feat/11.1_ef_core_package] `Microsoft.EntityFrameworkCore.SqlServer` added to Core, with a pinned `System.Security.Cryptography.Pkcs` because `Microsoft.Data.SqlClient` pulls a vulnerable version.
 - Feature 10 [docs/10_sql_server_decision] Database decision: SQL Server (the old site already uses it). README updated, MongoDB migration doc removed, replacement split into Features 11–12.
