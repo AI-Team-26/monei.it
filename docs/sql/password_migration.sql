@@ -5,7 +5,9 @@
 -- Run this script against the SQL Server database before deploying the updated application.
 
 -- 1. Widen the Password column (was NVARCHAR(50)).
-IF COL_LENGTH('Account', 'Password') < 128
+--    COL_LENGTH reports BYTES, so nvarchar(128) means 256; comparing against 128 would skip the
+--    ALTER for any column between nvarchar(64) and nvarchar(127).
+IF COL_LENGTH('Account', 'Password') < 256
     ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(128) NOT NULL;
 
 -- 2. Existing values are plain text and cannot be re-hashed in place.
@@ -17,12 +19,15 @@ UPDATE [Account]
 SET [Password] = ''
 WHERE [Password] <> '' AND [Password] NOT LIKE '$argon2id$%';
 
--- 3. Reset flag: DEFAULT 0 keeps new rows clean; existing rows are marked as needing reset.
+-- 3. Reset flag: DEFAULT 0 keeps new rows clean. An empty stored password always means "needs
+--    reset" (SetPassword rejects empty input), so mark exactly those rows on every run - this
+--    also catches legacy rows written during the migration window after a first run.
 IF COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
-BEGIN
-    ALTER TABLE [Account] ADD [PasswordResetRequired] BIT NOT NULL DEFAULT 0;
-    UPDATE [Account] SET [PasswordResetRequired] = 1;
-END
+    ALTER TABLE [Account] ADD [PasswordResetRequired] BIT NOT NULL CONSTRAINT DF_Account_PasswordResetRequired DEFAULT 0;
+
+UPDATE [Account]
+SET [PasswordResetRequired] = 1
+WHERE [Password] = '';
 
 -- 4. Verification: check column sizes
 SELECT 
@@ -36,5 +41,7 @@ WHERE TABLE_NAME = 'Account' AND COLUMN_NAME IN ('Password', 'PasswordResetRequi
 -- Expected result: Password = nvarchar(128), PasswordResetRequired = bit
 
 -- 5. Rollback (if needed). Blanked passwords cannot be restored.
+--    The default constraint must go before the column (SQL Server error 5074 otherwise).
+-- ALTER TABLE [Account] DROP CONSTRAINT DF_Account_PasswordResetRequired;
 -- ALTER TABLE [Account] DROP COLUMN [PasswordResetRequired];
 -- ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(50) NOT NULL;

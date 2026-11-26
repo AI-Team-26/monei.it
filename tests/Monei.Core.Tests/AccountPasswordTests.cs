@@ -21,6 +21,29 @@ public class AccountPasswordTests
     }
 
     [Test]
+    public void VerifyPassword_ReturnsFalse_NeverThrows_ForMalformedStoredValues()
+    {
+        // Every branch of ParsePhcString must fail closed (return false), never throw,
+        // and never reach Argon2 with hostile parameters.
+        var malformed = new[]
+        {
+            KnownHash.Replace("argon2id", "argon2i"),                     // wrong variant
+            KnownHash[..^10],                                             // truncated hash part
+            $"{KnownHash}$extra",                                         // too many segments
+            KnownHash.Replace("FMb_", "!!!"),                             // invalid base64 characters
+            KnownHash.Replace("m=65536", "m=2000000000"),                // out-of-range memory parameter
+            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw" // 4-byte salt
+        };
+
+        foreach (var stored in malformed)
+        {
+            var account = new Account();
+            StoreRawPassword(account, stored);
+            Assert.That(account.VerifyPassword("MySecret123!"), Is.False);
+        }
+    }
+
+    [Test]
     public void HashPassword_Throws_ForNullOrEmptyPassword()
     {
         Assert.Throws<ArgumentException>(() => Account.HashPassword(null!));
