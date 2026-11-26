@@ -3,6 +3,8 @@
 -- The app stores a self-describing PHC string ($argon2id$v=19$m=...,t=...,p=...$salt$hash),
 -- at most 97 chars today; NVARCHAR(128) leaves room for longer parameter strings.
 -- Run this script against the SQL Server database before deploying the updated application.
+-- Assumes the legacy column holds no NULL rows: the ALTER to NOT NULL below fails on NULLs,
+-- and the blanking UPDATE skips them.
 
 -- 1. Widen the Password column (was NVARCHAR(50)).
 --    COL_LENGTH reports BYTES, so nvarchar(128) means 256; comparing against 128 would skip the
@@ -41,6 +43,8 @@ WHERE TABLE_NAME = 'Account' AND COLUMN_NAME IN ('Password', 'PasswordResetRequi
 -- Expected result: Password = nvarchar(128), PasswordResetRequired = bit
 
 -- 5. Rollback (if needed). Blanked passwords cannot be restored.
+--    The shrink to NVARCHAR(50) fails while any 97-char hash is stored: blank the Password
+--    column first, which locks every user out again until they reset their password.
 --    The default constraint must go before the column (SQL Server error 5074 otherwise).
 -- ALTER TABLE [Account] DROP CONSTRAINT DF_Account_PasswordResetRequired;
 -- ALTER TABLE [Account] DROP COLUMN [PasswordResetRequired];

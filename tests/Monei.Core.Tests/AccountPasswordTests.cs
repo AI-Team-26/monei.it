@@ -32,7 +32,8 @@ public class AccountPasswordTests
             $"{KnownHash}$extra",                                         // too many segments
             KnownHash.Replace("FMb_", "!!!"),                             // invalid base64 characters
             KnownHash.Replace("m=65536", "m=2000000000"),                // out-of-range memory parameter
-            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw" // 4-byte salt
+            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw", // 4-byte salt
+            null!                                                         // NULL column materialized by EF
         };
 
         foreach (var stored in malformed)

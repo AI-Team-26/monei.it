@@ -64,7 +64,9 @@ public sealed class Account
 
     public bool VerifyPassword(string password)
     {
-        if (string.IsNullOrEmpty(password))
+        // A NULL column can still materialize into this property through EF, and an empty or
+        // missing stored value always means "needs reset", never "matches".
+        if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(Password))
             return false;
 
         // The stored string carries its own parameters, so old hashes keep verifying
