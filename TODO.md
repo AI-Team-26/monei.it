@@ -7,7 +7,8 @@
 - Feature 13 [feat/13_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
   (only after Feature 12) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
 - Bug 20 [fix/20_user_passwords] When the User entity lands, store its password hashed like Account.Password (Argon2id PHC string)
-- Feature 21 [feat/21_password_reset_flow] Login-time password reset flow using Account.PasswordResetRequired: force a new password when it is 1, clear it after the user sets one
+- Feature 21 [feat/21_password_reset_flow] Login-time password reset flow using Account.PasswordResetRequired: force a new password when it is 1, clear it after the user sets one.
+  Run VerifyPassword off the UI thread (~1 s per hash at current parameters) and add minimum password rules.
 
 ## Done
 - Bug 16 [fix/16_plaintext_passwords] `Account.Password` now hashed with Argon2id (self-describing PHC string, random salt). Migration path: SQL script widens column to nvarchar(128), blanks old plain text, marks rows for password reset.
