@@ -37,13 +37,16 @@ public class AccountPasswordTests
 {
     private static readonly byte[] FixedSalt = Enumerable.Range(0, 16).Select(i => (byte)i).ToArray();
 
-    [Test]
-    public void HashPassword_IsDeterministic_WithFixedSalt()
-    {
-        var hash1 = Account.HashPassword("MySecret123!", FixedSalt);
-        var hash2 = Account.HashPassword("MySecret123!", FixedSalt);
+    // Pre-calculated once for password "MySecret123!" and FixedSalt:
+    // Base64(salt + PBKDF2-HMAC-SHA256(password, salt, 10000 iterations, 32 bytes))
+    private const string KnownHash = "AAECAwQFBgcICQoLDA0OD4WE/U0ECOBpbnCq8ThvkmYIQzid6Y9+lY+PkH7YwDjp";
 
-        Assert.That(hash1, Is.EqualTo(hash2));
+    [Test]
+    public void HashPassword_MatchesKnownValue_WithFixedSalt()
+    {
+        var hash = Account.HashPassword("MySecret123!", FixedSalt);
+
+        Assert.That(hash, Is.EqualTo(KnownHash));
     }
 
     [Test]
