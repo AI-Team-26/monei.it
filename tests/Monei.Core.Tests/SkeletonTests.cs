@@ -35,12 +35,15 @@ public class SkeletonTests
 [TestFixture]
 public class AccountPasswordTests
 {
-    [Test]
-    public void HashPassword_ReturnsNonEmptyString_ForValidPassword()
-    {
-        var hash = Account.HashPassword("MySecret123!");
+    private static readonly byte[] FixedSalt = Enumerable.Range(0, 16).Select(i => (byte)i).ToArray();
 
-        Assert.That(hash, Is.Not.Empty);
+    [Test]
+    public void HashPassword_IsDeterministic_WithFixedSalt()
+    {
+        var hash1 = Account.HashPassword("MySecret123!", FixedSalt);
+        var hash2 = Account.HashPassword("MySecret123!", FixedSalt);
+
+        Assert.That(hash1, Is.EqualTo(hash2));
     }
 
     [Test]
@@ -93,11 +96,25 @@ public class AccountPasswordTests
     [Test]
     public void HashPassword_ProducesDifferentHashes_ForSamePassword()
     {
-        // PBKDF2 uses a random salt, so same password should produce different hashes
+        // Random salt per call, so same password produces different hashes
         var hash1 = Account.HashPassword("SamePassword123!");
         var hash2 = Account.HashPassword("SamePassword123!");
 
         Assert.That(hash1, Is.Not.EqualTo(hash2));
+    }
+
+    [Test]
+    public void HashPassword_ProducesDifferentHashes_ForDifferentSalts()
+    {
+        var otherSalt = Enumerable.Range(9, 16).Select(i => (byte)i).ToArray();
+
+        Assert.That(Account.HashPassword("P@ssw0rd", FixedSalt), Is.Not.EqualTo(Account.HashPassword("P@ssw0rd", otherSalt)));
+    }
+
+    [Test]
+    public void HashPassword_Throws_ForWrongSaltLength()
+    {
+        Assert.Throws<ArgumentException>(() => Account.HashPassword("MySecret123!", new byte[8]));
     }
 
     [Test]

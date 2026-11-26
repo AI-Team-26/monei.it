@@ -8,10 +8,7 @@ public sealed class Account
 
     public string Username { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Stored credential for this account. Not plain text: holds Base64(salt + derived hash).
-    /// The salt is kept together with the hash on purpose - it must be known to check a login.
-    /// </summary>
+    // Base64(salt + derived hash)
     public string Password { get; set; } = string.Empty;
 
     public string Role { get; set; } = string.Empty;
@@ -28,16 +25,23 @@ public sealed class Account
     private const int HashSize = 32;
     private const int Iterations = 10000;
 
-    public static string HashPassword(string password)
+    public static string HashPassword(string password, byte[]? salt = null)
     {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentException("Password cannot be null or empty", nameof(password));
 
-        var salt = new byte[SaltSize];
-        RandomNumberGenerator.Fill(salt);
+        if (salt is not null && salt.Length != SaltSize)
+            throw new ArgumentException($"Salt must be {SaltSize} bytes", nameof(salt));
+
+        if (salt is null || salt.Length == 0)
+        {
+            salt = new byte[SaltSize];
+            RandomNumberGenerator.Fill(salt);
+        }
         var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, HashAlgorithmName.SHA256, HashSize);
 
-        var saltAndHash = new byte[SaltSize + HashSize];
+        // concatenate salt + hash
+        var saltAndHash = new byte[salt.Length + HashSize];
         Array.Copy(salt, 0, saltAndHash, 0, SaltSize);
         Array.Copy(hash, 0, saltAndHash, SaltSize, HashSize);
 
