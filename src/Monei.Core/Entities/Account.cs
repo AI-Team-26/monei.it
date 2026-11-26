@@ -30,13 +30,15 @@ public sealed class Account
         if (string.IsNullOrEmpty(password))
             throw new ArgumentException("Password cannot be null or empty", nameof(password));
 
-        if (salt is not null && salt.Length != SaltSize)
-            throw new ArgumentException($"Salt must be {SaltSize} bytes", nameof(salt));
-
-        if (salt is null || salt.Length == 0)
+        // null means "generate a fresh random salt"; any provided salt must be exactly SaltSize bytes.
+        if (salt is null)
         {
             salt = new byte[SaltSize];
             RandomNumberGenerator.Fill(salt);
+        }
+        else if (salt.Length != SaltSize)
+        {
+            throw new ArgumentException($"Salt must be {SaltSize} bytes", nameof(salt));
         }
         var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, HashAlgorithmName.SHA256, HashSize);
 

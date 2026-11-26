@@ -117,6 +117,7 @@ public class AccountPasswordTests
     [Test]
     public void HashPassword_Throws_ForWrongSaltLength()
     {
+        Assert.Throws<ArgumentException>(() => Account.HashPassword("MySecret123!", Array.Empty<byte>()));
         Assert.Throws<ArgumentException>(() => Account.HashPassword("MySecret123!", new byte[8]));
     }
 
