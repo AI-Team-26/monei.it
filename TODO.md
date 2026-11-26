@@ -6,9 +6,11 @@
   delete `MongoRepository` and `MongoDbSettings`. Needs Feature 11.2.
 - Feature 13 [feat/13_remove_mongodb] Remove MongoDB leftovers: `MongoDB.Driver` version in `Directory.Packages.props`
   (only after Feature 12) and `mongo-data/` in `.gitignore`. Compose service and `.env.example` are already cleaned.
+- Bug 20 [fix/20_user_passwords] When the User entity lands, store its password hashed like Account.Password (Argon2id PHC string)
+- Feature 21 [feat/21_password_reset_flow] Login-time password reset flow using Account.PasswordResetRequired: force a new password when it is 1, clear it after the user sets one
 
 ## Done
-- Bug 16 [fix/16_plaintext_passwords] `Account.Password` now hashed with PBKDF2 (HMAC-SHA256, 10k iterations, per-password salt). Migration path: SQL script widens column to nvarchar(128), existing rows require password reset.
+- Bug 16 [fix/16_plaintext_passwords] `Account.Password` now hashed with Argon2id (self-describing PHC string, random salt). Migration path: SQL script widens column to nvarchar(128), blanks old plain text, marks rows for password reset.
 - Bug 17 [fix/17_ef_smoke_test] Integration tests for the EF model (schema check against the real `Registry` table) and `GetByDateRangeAsync`, against the local SQL Server.
 - Bug 19 [fix/19_startupuri] `App.xaml` used `StartupUri`, which requires a default `MainWindow` constructor; the window is now created via DI in `OnStartup`.
 - Bug 18 [fix/18_appxaml_bad_resource] `App.xaml` merged a nonexistent `CommunityToolkit.Mvvm` `Styles.xaml`, crashing the app at startup with a XamlParseException.

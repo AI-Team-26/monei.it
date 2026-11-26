@@ -1,48 +1,40 @@
 -- Password Hash Migration Script
--- Bug 16: Migrate Account.Password from plain text to PBKDF2 hash
+-- Bug 16: migrate Account.Password from plain text to Argon2id hashes.
+-- The app stores a self-describing PHC string ($argon2id$v=19$m=...,t=...,p=...$salt$hash),
+-- at most 97 chars today; NVARCHAR(128) leaves room for longer parameter strings.
 -- Run this script against the SQL Server database before deploying the updated application.
 
--- 1. Widen the Password column to accommodate PBKDF2 hash (Base64-encoded salt+hash = ~88 chars)
-ALTER TABLE [Account]
-ALTER COLUMN [Password] NVARCHAR(128) NOT NULL;
+-- 1. Widen the Password column (was NVARCHAR(50)).
+IF COL_LENGTH('Account', 'Password') < 128
+    ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(128) NOT NULL;
 
--- 2. Migration strategy for existing plain text passwords:
---    Since we cannot verify if existing values are plain text or already hashed,
---    the safest approach is to mark all existing passwords as invalid and force password reset.
---    
---    Option A: Force password reset for all users (RECOMMENDED for security)
---    Set a flag or marker that triggers password reset on next login.
---    This requires application-level support.
-
---    Option B: Attempt to re-hash (NOT RECOMMENDED - can't verify if already hashed)
---    Only safe if you KNOW all current values are plain text and no previous migration ran.
-
--- 3. For production: Create a password reset workflow
---    - Add a PasswordResetRequired BIT column (default 1 for existing users, 0 for new)
---    - On login, if PasswordResetRequired = 1, redirect to password reset flow
---    - After reset, set PasswordResetRequired = 0
-
--- Example: Add reset flag column
-ALTER TABLE [Account]
-ADD [PasswordResetRequired] BIT NOT NULL DEFAULT 1;
-
--- Update existing rows to require reset
+-- 2. Existing values are plain text and cannot be re-hashed in place.
+--    Blank them so no plain text stays at rest. VerifyPassword rejects an empty stored value,
+--    so login stays blocked until each user resets their password.
+--    Already-migrated rows hold a $argon2id$... string and are left untouched, which keeps
+--    this script safe to run more than once.
 UPDATE [Account]
-SET [PasswordResetRequired] = 1;
+SET [Password] = ''
+WHERE [Password] <> '' AND [Password] NOT LIKE '$argon2id$%';
 
--- For new users, the application should set PasswordResetRequired = 0 after first password set
+-- 3. Reset flag: DEFAULT 0 keeps new rows clean; existing rows are marked as needing reset.
+IF COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
+BEGIN
+    ALTER TABLE [Account] ADD [PasswordResetRequired] BIT NOT NULL DEFAULT 0;
+    UPDATE [Account] SET [PasswordResetRequired] = 1;
+END
 
--- 4. Verification: Check column size
+-- 4. Verification: check column sizes
 SELECT 
     TABLE_NAME, 
     COLUMN_NAME, 
     DATA_TYPE, 
     CHARACTER_MAXIMUM_LENGTH
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'Account' AND COLUMN_NAME = 'Password';
+WHERE TABLE_NAME = 'Account' AND COLUMN_NAME IN ('Password', 'PasswordResetRequired');
 
--- Expected result: CHARACTER_MAXIMUM_LENGTH = 128
+-- Expected result: Password = nvarchar(128), PasswordResetRequired = bit
 
--- 5. Rollback (if needed)
--- ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(50) NOT NULL;
+-- 5. Rollback (if needed). Blanked passwords cannot be restored.
 -- ALTER TABLE [Account] DROP COLUMN [PasswordResetRequired];
+-- ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(50) NOT NULL;
