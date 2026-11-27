@@ -30,17 +30,13 @@ UPDATE [Account]
 SET [PasswordResetRequired] = 1
 WHERE [Password] IS NULL;
 
--- 4. Verification: check column sizes
-SELECT 
-    TABLE_NAME, 
-    COLUMN_NAME, 
-    DATA_TYPE, 
-    CHARACTER_MAXIMUM_LENGTH,
-    IS_NULLABLE
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'Account' AND COLUMN_NAME IN ('Password', 'PasswordResetRequired');
-
--- Expected result: Password = nvarchar(128) nullable, PasswordResetRequired = bit not null
+-- 4. Self-verification: raise an error if the schema is not in the expected state, so a wrong
+--    outcome fails the run instead of printing a row nobody checks.
+IF COL_LENGTH('Account', 'Password') <> 256
+   OR COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
+   OR NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = 'Account' AND COLUMN_NAME = 'Password' AND IS_NULLABLE = 'YES')
+    RAISERROR(N'Password migration failed verification: Account.Password must be nvarchar(128) nullable and Account.PasswordResetRequired must exist.', 16, 1);
 
 -- 5. Rollback (if needed). Blanked passwords cannot be restored.
 --    The shrink to NVARCHAR(50) fails while any 97-char hash is stored: blank the Password
