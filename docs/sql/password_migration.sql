@@ -4,6 +4,11 @@
 -- at most 97 chars today; NVARCHAR(128) leaves room for longer parameter strings.
 -- A NULL password means "not set / needs reset"; VerifyPassword fails closed on it.
 -- Run this script against the SQL Server database before deploying the updated application.
+-- Take a database backup first: blanking the passwords has no undo (the rollback below cannot
+-- restore them either).
+
+SET XACT_ABORT ON;
+BEGIN TRAN;
 
 -- 1. Widen the Password column (was NVARCHAR(50)). It stays nullable: NULL is how the app
 --    represents an unset password.
@@ -30,15 +35,21 @@ UPDATE [Account]
 SET [PasswordResetRequired] = 1
 WHERE [Password] IS NULL;
 
--- 4. Self-verification: raise an error if the schema is not in the expected state, so a wrong
---    outcome fails the run instead of printing a row nobody checks.
+-- 4. Self-verification inside the same transaction: a wrong outcome rolls back everything,
+--    leaving the database exactly as it was.
 IF COL_LENGTH('Account', 'Password') <> 256
    OR COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
    OR NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
                   WHERE TABLE_NAME = 'Account' AND COLUMN_NAME = 'Password' AND IS_NULLABLE = 'YES')
+BEGIN
+    ROLLBACK;
     RAISERROR(N'Password migration failed verification: Account.Password must be nvarchar(128) nullable and Account.PasswordResetRequired must exist.', 16, 1);
+END
 
--- 5. Rollback (if needed). Blanked passwords cannot be restored.
+COMMIT;
+
+-- 5. Rollback (if needed). Steps 1-4 are one transaction, so a failure already rolled back;
+--    use this only to undo a successful run. Blanked passwords cannot be restored.
 --    The shrink to NVARCHAR(50) fails while any 97-char hash is stored: blank the Password
 --    column first (set it to NULL), which locks every user out again until they reset their
 --    password.

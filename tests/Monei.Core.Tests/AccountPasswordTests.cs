@@ -71,6 +71,16 @@ public class AccountPasswordTests
     }
 
     [Test]
+    public void SetPassword_ClearsResetFlag()
+    {
+        var account = new Account { PasswordResetRequired = true };
+
+        account.SetPassword("MySecret123!");
+
+        Assert.That(account.PasswordResetRequired, Is.False);
+    }
+
+    [Test]
     public void NewAccount_HasNoPassword_AndFailsVerification()
     {
         var account = new Account();

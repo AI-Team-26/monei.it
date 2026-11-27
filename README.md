@@ -22,7 +22,8 @@ the web app, the API and the mobile app are built on top of the same data.
 - **Desktop app:** WPF, C# on .NET 10 LTS (upgrade to .NET 11 when it reaches GA)
 - **MVVM:** CommunityToolkit.Mvvm
 - **Data access:** EF Core (`Microsoft.EntityFrameworkCore.SqlServer`) with the repository pattern.
-  The entities are scaffolded from the existing database; no migrations until the schema needs to change.
+  The entities are scaffolded from the existing database; the app never changes the schema by
+  itself — schema changes are applied manually with the scripts in `docs/sql/`.
 - **Tests:** NUnit + Moq
 - **Development database:** SQL Server 2025 in Docker, data kept on the host via a bind-mounted volume (`./sql-data`)
 - **Packaging:** self-contained single-file `.exe`
@@ -46,6 +47,11 @@ the final dockerized application, so we use the same one from day one.
 
 `docs/sql-server-backup-restore.md` explains how to take a `.bak` backup on the VPS and restore
 it into the local container, which keeps the real data on the PC.
+
+Before running the app against an existing database (for example one restored from a VPS `.bak`),
+run `docs/sql/password_migration.sql`. It widens `Account.Password`, blanks every stored password
+(users must reset them until Feature 21 ships) and adds `Account.PasswordResetRequired`. Take a
+backup first: blanking has no undo.
 
 The code still contains the MongoDB repository and wiring written before this decision.
 Replacing it with SQL Server data access is tracked in `TODO.md` (Features 11 and 12).

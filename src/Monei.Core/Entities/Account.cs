@@ -24,7 +24,12 @@ public sealed class Account
 
     public Guid Guid { get; set; }
 
-    public void SetPassword(string plainText) => Password = PasswordHelper.HashPassword(plainText);
+    // Setting a password always clears the reset flag, so the two properties can't drift apart.
+    public void SetPassword(string plainText)
+    {
+        Password = PasswordHelper.HashPassword(plainText);
+        PasswordResetRequired = false;
+    }
 
     public bool VerifyPassword(string plainText) => PasswordHelper.VerifyPassword(Password, plainText);
 }
