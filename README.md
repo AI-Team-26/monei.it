@@ -53,6 +53,11 @@ run `docs/sql/password_migration.sql`. It widens `Account.Password`, blanks ever
 (users must reset them until Feature 21 ships) and adds `Account.PasswordResetRequired`. Take a
 backup first: blanking has no undo.
 
+```bash
+sqlcmd -S localhost,1433 -U sa -P monei-Local-Password-1 -d monei -b -i docs/sql/password_migration.sql
+```
+The `-b` flag makes `sqlcmd` exit non-zero on error; run it in SSMS works just as well.
+
 The code still contains the MongoDB repository and wiring written before this decision.
 Replacing it with SQL Server data access is tracked in `TODO.md` (Features 11 and 12).
 

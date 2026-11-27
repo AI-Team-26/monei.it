@@ -36,14 +36,16 @@ SET [PasswordResetRequired] = 1
 WHERE [Password] IS NULL;
 
 -- 4. Self-verification inside the same transaction: a wrong outcome rolls back everything,
---    leaving the database exactly as it was.
-IF COL_LENGTH('Account', 'Password') <> 256
+--    leaving the database exactly as it was. Wider-than-nvarchar(128) is fine (same rule as
+--    step 1). THROW, not RAISERROR: it terminates the batch, so no runner sees success after
+--    a failed check even without sqlcmd -b.
+IF COL_LENGTH('Account', 'Password') < 256
    OR COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
    OR NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
                   WHERE TABLE_NAME = 'Account' AND COLUMN_NAME = 'Password' AND IS_NULLABLE = 'YES')
 BEGIN
     ROLLBACK;
-    RAISERROR(N'Password migration failed verification: Account.Password must be nvarchar(128) nullable and Account.PasswordResetRequired must exist.', 16, 1);
+    THROW 50000, N'Password migration failed verification: Account.Password must be at least nvarchar(128) nullable and Account.PasswordResetRequired must exist.', 1;
 END
 
 COMMIT;
