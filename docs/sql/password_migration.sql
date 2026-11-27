@@ -37,8 +37,9 @@ WHERE [Password] IS NULL;
 
 -- 4. Self-verification inside the same transaction: a wrong outcome rolls back everything,
 --    leaving the database exactly as it was. Wider-than-nvarchar(128) is fine (same rule as
---    step 1). THROW, not RAISERROR: it terminates the batch, so no runner sees success after
---    a failed check even without sqlcmd -b.
+--    step 1). THROW, not RAISERROR: it terminates the batch, so nothing after the check runs.
+--    Runners that check exit codes still need sqlcmd -b (see README) - THROW alone does not
+--    change the process exit code.
 IF COL_LENGTH('Account', 'Password') < 256
    OR COL_LENGTH('Account', 'PasswordResetRequired') IS NULL
    OR NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
