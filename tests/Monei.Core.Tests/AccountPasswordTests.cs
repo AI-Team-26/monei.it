@@ -1,4 +1,5 @@
 using Monei.Core.Entities;
+using Monei.Core.Security;
 using NUnit.Framework;
 
 namespace Monei.Core.Tests;
@@ -15,7 +16,7 @@ public class AccountPasswordTests
     [Test]
     public void HashPassword_MatchesKnownValue_WithFixedSalt()
     {
-        var hash = Account.HashPassword("MySecret123!", FixedSalt);
+        var hash = PasswordHelper.HashPassword("MySecret123!", FixedSalt);
 
         Assert.That(hash, Is.EqualTo(KnownHash));
     }
@@ -32,23 +33,31 @@ public class AccountPasswordTests
             $"{KnownHash}$extra",                                         // too many segments
             KnownHash.Replace("FMb_", "!!!"),                             // invalid base64 characters
             KnownHash.Replace("m=65536", "m=2000000000"),                // out-of-range memory parameter
-            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw", // 4-byte salt
-            null!                                                         // NULL column materialized by EF
+            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw" // 4-byte salt
         };
 
         foreach (var stored in malformed)
         {
-            var account = new Account();
-            StoreRawPassword(account, stored);
-            Assert.That(account.VerifyPassword("MySecret123!"), Is.False);
+            Assert.That(PasswordHelper.VerifyPassword(stored, "MySecret123!"), Is.False);
         }
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_ForMissingOrEmptyValues()
+    {
+        // A NULL column materializes as null even into a nullable property through EF;
+        // an unset password is simply "no match".
+        Assert.That(PasswordHelper.VerifyPassword(null, "anypassword"), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(string.Empty, "anypassword"), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(KnownHash, null!), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(KnownHash, string.Empty), Is.False);
     }
 
     [Test]
     public void HashPassword_Throws_ForNullOrEmptyPassword()
     {
-        Assert.Throws<ArgumentException>(() => Account.HashPassword(null!));
-        Assert.Throws<ArgumentException>(() => Account.HashPassword(string.Empty));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword(null!));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword(string.Empty));
     }
 
     [Test]
@@ -62,6 +71,15 @@ public class AccountPasswordTests
     }
 
     [Test]
+    public void NewAccount_HasNoPassword_AndFailsVerification()
+    {
+        var account = new Account();
+
+        Assert.That(account.Password, Is.Null);
+        Assert.That(account.VerifyPassword("anypassword"), Is.False);
+    }
+
+    [Test]
     public void VerifyPassword_ReturnsFalse_ForLegacyPlainTextStoredValue()
     {
         var account = new Account();
@@ -71,29 +89,11 @@ public class AccountPasswordTests
     }
 
     [Test]
-    public void VerifyPassword_ReturnsFalse_ForEmptyStoredPassword()
-    {
-        var account = new Account();
-
-        Assert.That(account.VerifyPassword("anypassword"), Is.False);
-    }
-
-    [Test]
-    public void VerifyPassword_ReturnsFalse_ForNullOrEmptyInputPassword()
-    {
-        var account = new Account();
-        account.SetPassword("SomePassword123!");
-
-        Assert.That(account.VerifyPassword(null!), Is.False);
-        Assert.That(account.VerifyPassword(string.Empty), Is.False);
-    }
-
-    [Test]
     public void HashPassword_ProducesDifferentHashes_ForSamePassword()
     {
         // Random salt per call, so same password produces different hashes
-        var hash1 = Account.HashPassword("SamePassword123!");
-        var hash2 = Account.HashPassword("SamePassword123!");
+        var hash1 = PasswordHelper.HashPassword("SamePassword123!");
+        var hash2 = PasswordHelper.HashPassword("SamePassword123!");
 
         Assert.That(hash1, Is.Not.EqualTo(hash2));
     }
@@ -103,14 +103,14 @@ public class AccountPasswordTests
     {
         var otherSalt = Enumerable.Range(9, 16).Select(i => (byte)i).ToArray();
 
-        Assert.That(Account.HashPassword("P@ssw0rd", FixedSalt), Is.Not.EqualTo(Account.HashPassword("P@ssw0rd", otherSalt)));
+        Assert.That(PasswordHelper.HashPassword("P@ssw0rd", FixedSalt), Is.Not.EqualTo(PasswordHelper.HashPassword("P@ssw0rd", otherSalt)));
     }
 
     [Test]
     public void HashPassword_Throws_ForWrongSaltLength()
     {
-        Assert.Throws<ArgumentException>(() => Account.HashPassword("MySecret123!", Array.Empty<byte>()));
-        Assert.Throws<ArgumentException>(() => Account.HashPassword("MySecret123!", new byte[8]));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword("MySecret123!", Array.Empty<byte>()));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword("MySecret123!", new byte[8]));
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class AccountPasswordTests
     [Test]
     public void HashPassword_Format_IsPhcStringWithExpectedSizes()
     {
-        var hash = Account.HashPassword("Test123!");
+        var hash = PasswordHelper.HashPassword("Test123!");
 
         Assert.That(hash, Does.StartWith("$argon2id$v=19$"));
         // $argon2id$v=19$m=...,t=...,p=...$ + base64url salt (16 bytes) + base64url hash (32 bytes)
