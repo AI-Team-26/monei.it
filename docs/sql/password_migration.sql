@@ -10,11 +10,14 @@
 SET XACT_ABORT ON;
 BEGIN TRAN;
 
--- 1. Widen the Password column (was NVARCHAR(50)). It stays nullable: NULL is how the app
---    represents an unset password.
+-- 1. Widen the Password column (was NVARCHAR(50)) and make it nullable. It stays nullable:
+--    NULL is how the app represents an unset password.
 --    COL_LENGTH reports BYTES, so nvarchar(128) means 256; comparing against 128 would skip the
---    ALTER for any column between nvarchar(64) and nvarchar(127).
+--    ALTER for any column between nvarchar(64) and nvarchar(127). The AllowsNull check repairs
+--    columns already wide enough but NOT NULL (an earlier draft of this script left them that
+--    way); without it, step 2 fails with error 515 on such databases.
 IF COL_LENGTH('Account', 'Password') < 256
+   OR COLUMNPROPERTY(OBJECT_ID('Account'), 'Password', 'AllowsNull') = 0
     ALTER TABLE [Account] ALTER COLUMN [Password] NVARCHAR(128) NULL;
 
 -- 2. Existing values are plain text and cannot be re-hashed in place. Set them to NULL so no

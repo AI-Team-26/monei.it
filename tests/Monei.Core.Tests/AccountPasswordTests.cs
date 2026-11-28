@@ -13,6 +13,11 @@ public class AccountPasswordTests
     // If anyone changes the algorithm or parameters this fails instead of silently staying green.
     private const string KnownHash = "$argon2id$v=19$m=65536,t=3,p=1$AAECAwQFBgcICQoLDA0ODw$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw";
 
+    // Same password and salt as KnownHash but written with other in-bounds parameters (m=19456,
+    // t=2, p=1). Proves the stored string carries its own parameters: a hash written before a
+    // future raise of MemoryKiB/Iterations must still verify.
+    private const string AlternateParametersHash = "$argon2id$v=19$m=19456,t=2,p=1$AAECAwQFBgcICQoLDA0ODw$nvxS7C21p8Ba5mOmAo2Z4yOS_4ZzMM94DDVO6DLqbW8";
+
     [Test]
     public void HashPassword_MatchesKnownValue_WithFixedSalt()
     {
@@ -32,7 +37,8 @@ public class AccountPasswordTests
             KnownHash[..^10],                                             // truncated hash part
             $"{KnownHash}$extra",                                         // too many segments
             KnownHash.Replace("FMb_", "!!!"),                             // invalid base64 characters
-            KnownHash.Replace("m=65536", "m=2000000000"),                // out-of-range memory parameter
+            KnownHash.Replace("m=65536", "m=2000000000"),                // memory parameter above upper bound
+            KnownHash.Replace("m=65536", "m=4096"),                     // memory parameter below lower bound
             "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw" // 4-byte salt
         };
 
@@ -71,6 +77,22 @@ public class AccountPasswordTests
     }
 
     [Test]
+    public void VerifyPassword_VerifiesHashWrittenWithOtherInBoundsParameters()
+    {
+        Assert.That(PasswordHelper.VerifyPassword(AlternateParametersHash, "MySecret123!"), Is.True);
+    }
+
+    [Test]
+    public void WriteParameters_AreWithinParserBounds()
+    {
+        // A write constant outside these bounds would make ParsePhcString reject our own new hashes:
+        // the pinned KnownHash test would fail first and hide the real cause.
+        Assert.That(PasswordHelper.MemoryKiB, Is.InRange(PasswordHelper.MinMemoryKiB, PasswordHelper.MaxMemoryKiB));
+        Assert.That(PasswordHelper.Iterations, Is.LessThanOrEqualTo(PasswordHelper.MaxIterations));
+        Assert.That(PasswordHelper.Parallelism, Is.LessThanOrEqualTo(PasswordHelper.MaxParallelism));
+    }
+
+    [Test]
     public void SetPassword_ClearsResetFlag()
     {
         var account = new Account { PasswordResetRequired = true };
@@ -78,6 +100,20 @@ public class AccountPasswordTests
         account.SetPassword("MySecret123!");
 
         Assert.That(account.PasswordResetRequired, Is.False);
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_WhileResetRequired_AndPassesAfterNewPassword()
+    {
+        var account = new Account();
+        account.SetPassword("OldSecret123!");
+        account.PasswordResetRequired = true;
+
+        Assert.That(account.VerifyPassword("OldSecret123!"), Is.False);
+
+        account.SetPassword("NewSecret123!");
+
+        Assert.That(account.VerifyPassword("NewSecret123!"), Is.True);
     }
 
     [Test]

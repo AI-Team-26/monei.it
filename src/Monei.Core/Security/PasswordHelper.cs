@@ -10,18 +10,22 @@ public static class PasswordHelper
     private const int HashSize = 32;
     private const int PhcVersion = 19;
     // Above the OWASP minimum for Argon2id (19 MiB / 2 iterations).
-    private const int MemoryKiB = 64 * 1024;
-    private const int Iterations = 3;
-    private const int Parallelism = 1;
+    internal const int MemoryKiB = 64 * 1024;
+    internal const int Iterations = 3;
+    internal const int Parallelism = 1;
 
     // Bounds for parameters read back from a stored PHC string. A corrupted or hostile row must
     // fail verification, never make Argon2 allocate terabytes or throw.
-    private const int MinMemoryKiB = 8 * 1024;
-    private const int MaxMemoryKiB = 256 * 1024;
-    private const int MaxIterations = 10;
-    private const int MaxParallelism = 8;
+    internal const int MinMemoryKiB = 8 * 1024;
+    internal const int MaxMemoryKiB = 256 * 1024;
+    internal const int MaxIterations = 10;
+    internal const int MaxParallelism = 8;
 
-    public static string HashPassword(string password, byte[]? salt = null)
+    public static string HashPassword(string password) => HashPassword(password, null);
+
+    // The salt overload is internal on purpose: only the deterministic tests may pin a salt.
+    // Public callers always get a fresh random salt.
+    internal static string HashPassword(string password, byte[]? salt)
     {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentException("Password cannot be null or empty", nameof(password));

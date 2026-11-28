@@ -31,5 +31,7 @@ public sealed class Account
         PasswordResetRequired = false;
     }
 
-    public bool VerifyPassword(string plainText) => PasswordHelper.VerifyPassword(Password, plainText);
+    // A pending reset blocks login even if a valid hash is still stored; SetPassword clears the flag.
+    public bool VerifyPassword(string plainText)
+        => !PasswordResetRequired && PasswordHelper.VerifyPassword(Password, plainText);
 }
