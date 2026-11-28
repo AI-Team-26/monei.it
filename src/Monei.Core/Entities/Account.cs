@@ -1,3 +1,5 @@
+using Monei.Core.Security;
+
 namespace Monei.Core.Entities;
 
 public sealed class Account
@@ -6,7 +8,9 @@ public sealed class Account
 
     public string Username { get; set; } = string.Empty;
 
-    public string Password { get; set; } = string.Empty;
+    public string? Password { get; private set; }
+
+    public bool PasswordResetRequired { get; set; }
 
     public string Role { get; set; } = string.Empty;
 
@@ -17,4 +21,13 @@ public sealed class Account
     public DateTime? LastChangeDate { get; set; }
 
     public Guid Guid { get; set; }
+
+    public void SetPassword(string plainText)
+    {
+        Password = PasswordHelper.HashPassword(plainText);
+        PasswordResetRequired = false;
+    }
+
+    public bool VerifyPassword(string plainText)
+        => !PasswordResetRequired && PasswordHelper.VerifyPassword(Password, plainText);
 }

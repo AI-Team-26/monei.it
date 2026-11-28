@@ -43,7 +43,7 @@ public class MoneiDbContext : DbContext
             e.ToTable("Account");
             e.HasKey(x => x.Id);
             e.Property(x => x.Username).HasColumnType("nvarchar(50)");
-            e.Property(x => x.Password).HasColumnType("nvarchar(50)");
+            e.Property(x => x.Password).HasColumnType("nvarchar(128)");
             e.Property(x => x.Role).HasColumnType("nvarchar(30)");
             e.Property(x => x.CreationDate).HasColumnType("smalldatetime");
             e.Property(x => x.LastChangeDate).HasColumnType("smalldatetime");

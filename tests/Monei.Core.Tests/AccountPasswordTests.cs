@@ -1,0 +1,201 @@
+using Monei.Core.Entities;
+using Monei.Core.Security;
+using NUnit.Framework;
+
+namespace Monei.Core.Tests;
+
+[TestFixture]
+public class AccountPasswordTests
+{
+    private static readonly byte[] FixedSalt = Enumerable.Range(0, 16).Select(i => (byte)i).ToArray();
+
+    // Pre-calculated once for password "MySecret123!" and FixedSalt with m=65536 KiB, t=3, p=1.
+    // If anyone changes the algorithm or parameters this fails instead of silently staying green.
+    private const string KnownHash = "$argon2id$v=19$m=65536,t=3,p=1$AAECAwQFBgcICQoLDA0ODw$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw";
+
+    // Same password and salt as KnownHash but written with other in-bounds parameters (m=19456,
+    // t=2, p=1). Proves the stored string carries its own parameters: a hash written before a
+    // future raise of MemoryKiB/Iterations must still verify.
+    private const string AlternateParametersHash = "$argon2id$v=19$m=19456,t=2,p=1$AAECAwQFBgcICQoLDA0ODw$nvxS7C21p8Ba5mOmAo2Z4yOS_4ZzMM94DDVO6DLqbW8";
+
+    [Test]
+    public void HashPassword_MatchesKnownValue_WithFixedSalt()
+    {
+        var hash = PasswordHelper.HashPassword("MySecret123!", FixedSalt);
+
+        Assert.That(hash, Is.EqualTo(KnownHash));
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_NeverThrows_ForMalformedStoredValues()
+    {
+        // Every branch of ParsePhcString must fail closed (return false), never throw,
+        // and never reach Argon2 with hostile parameters.
+        var malformed = new[]
+        {
+            KnownHash.Replace("argon2id", "argon2i"),                     // wrong variant
+            KnownHash[..^10],                                             // truncated hash part
+            $"{KnownHash}$extra",                                         // too many segments
+            KnownHash.Replace("FMb_", "!!!"),                             // invalid base64 characters
+            KnownHash.Replace("m=65536", "m=2000000000"),                // memory parameter above upper bound
+            KnownHash.Replace("m=65536", "m=4096"),                     // memory parameter below lower bound
+            "$argon2id$v=19$m=65536,t=3,p=1$AAAA$FMb_ouevQlnH2jJvzAsnk4N_eGA4t01gvz5iEPb2ktw" // 4-byte salt
+        };
+
+        foreach (var stored in malformed)
+        {
+            Assert.That(PasswordHelper.VerifyPassword(stored, "MySecret123!"), Is.False);
+        }
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_ForMissingOrEmptyValues()
+    {
+        // A NULL column materializes as null even into a nullable property through EF;
+        // an unset password is simply "no match".
+        Assert.That(PasswordHelper.VerifyPassword(null, "anypassword"), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(string.Empty, "anypassword"), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(KnownHash, null!), Is.False);
+        Assert.That(PasswordHelper.VerifyPassword(KnownHash, string.Empty), Is.False);
+    }
+
+    [Test]
+    public void HashPassword_Throws_ForNullOrEmptyPassword()
+    {
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword(null!));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword(string.Empty));
+    }
+
+    [Test]
+    public void SetPassword_AllowsVerifyPassword()
+    {
+        var account = new Account();
+        account.SetPassword("MySecret123!");
+
+        Assert.That(account.VerifyPassword("MySecret123!"), Is.True);
+        Assert.That(account.VerifyPassword("Wrong123!"), Is.False);
+    }
+
+    [Test]
+    public void VerifyPassword_VerifiesHashWrittenWithOtherInBoundsParameters()
+    {
+        Assert.That(PasswordHelper.VerifyPassword(AlternateParametersHash, "MySecret123!"), Is.True);
+    }
+
+    [Test]
+    public void WriteParameters_AreWithinParserBounds()
+    {
+        // A write constant outside these bounds would make ParsePhcString reject our own new hashes:
+        // the pinned KnownHash test would fail first and hide the real cause.
+        Assert.That(PasswordHelper.MemoryKiB, Is.InRange(PasswordHelper.MinMemoryKiB, PasswordHelper.MaxMemoryKiB));
+        Assert.That(PasswordHelper.Iterations, Is.LessThanOrEqualTo(PasswordHelper.MaxIterations));
+        Assert.That(PasswordHelper.Parallelism, Is.LessThanOrEqualTo(PasswordHelper.MaxParallelism));
+    }
+
+    [Test]
+    public void SetPassword_ClearsResetFlag()
+    {
+        var account = new Account { PasswordResetRequired = true };
+
+        account.SetPassword("MySecret123!");
+
+        Assert.That(account.PasswordResetRequired, Is.False);
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_WhileResetRequired_AndPassesAfterNewPassword()
+    {
+        var account = new Account();
+        account.SetPassword("OldSecret123!");
+        account.PasswordResetRequired = true;
+
+        Assert.That(account.VerifyPassword("OldSecret123!"), Is.False);
+
+        account.SetPassword("NewSecret123!");
+
+        Assert.That(account.VerifyPassword("NewSecret123!"), Is.True);
+    }
+
+    [Test]
+    public void NewAccount_HasNoPassword_AndFailsVerification()
+    {
+        var account = new Account();
+
+        Assert.That(account.Password, Is.Null);
+        Assert.That(account.VerifyPassword("anypassword"), Is.False);
+    }
+
+    [Test]
+    public void VerifyPassword_ReturnsFalse_ForLegacyPlainTextStoredValue()
+    {
+        var account = new Account();
+        StoreRawPassword(account, "secret");
+
+        Assert.That(account.VerifyPassword("secret"), Is.False);
+    }
+
+    [Test]
+    public void HashPassword_ProducesDifferentHashes_ForSamePassword()
+    {
+        // Random salt per call, so same password produces different hashes
+        var hash1 = PasswordHelper.HashPassword("SamePassword123!");
+        var hash2 = PasswordHelper.HashPassword("SamePassword123!");
+
+        Assert.That(hash1, Is.Not.EqualTo(hash2));
+    }
+
+    [Test]
+    public void HashPassword_ProducesDifferentHashes_ForDifferentSalts()
+    {
+        var otherSalt = Enumerable.Range(9, 16).Select(i => (byte)i).ToArray();
+
+        Assert.That(PasswordHelper.HashPassword("P@ssw0rd", FixedSalt), Is.Not.EqualTo(PasswordHelper.HashPassword("P@ssw0rd", otherSalt)));
+    }
+
+    [Test]
+    public void HashPassword_Throws_ForWrongSaltLength()
+    {
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword("MySecret123!", Array.Empty<byte>()));
+        Assert.Throws<ArgumentException>(() => PasswordHelper.HashPassword("MySecret123!", new byte[8]));
+    }
+
+    [Test]
+    public void VerifyPassword_IsCaseSensitive()
+    {
+        var password = "CaseSensitive123!";
+        var account = new Account();
+        account.SetPassword(password);
+
+        Assert.That(account.VerifyPassword("casesensitive123!"), Is.False);
+        Assert.That(account.VerifyPassword("CASESENSITIVE123!"), Is.False);
+        Assert.That(account.VerifyPassword(password), Is.True);
+    }
+
+    [Test]
+    public void HashPassword_Format_IsPhcStringWithExpectedSizes()
+    {
+        var hash = PasswordHelper.HashPassword("Test123!");
+
+        Assert.That(hash, Does.StartWith("$argon2id$v=19$"));
+        // $argon2id$v=19$m=...,t=...,p=...$ + base64url salt (16 bytes) + base64url hash (32 bytes)
+        Assert.That(hash.Length, Is.EqualTo(97));
+
+        var parts = hash.Split('$');
+        Assert.That(Base64UrlDecode(parts[4]).Length, Is.EqualTo(16), "salt size");
+        Assert.That(Base64UrlDecode(parts[5]).Length, Is.EqualTo(32), "hash size");
+    }
+
+    private static void StoreRawPassword(Account account, string raw)
+        => typeof(Account).GetProperty(nameof(Account.Password))!.SetValue(account, raw);
+
+    private static byte[] Base64UrlDecode(string text)
+    {
+        var base64 = text.Replace('-', '+').Replace('_', '/');
+        return (base64.Length % 4) switch
+        {
+            2 => Convert.FromBase64String($"{base64}=="),
+            3 => Convert.FromBase64String($"{base64}" + "="),
+            _ => Convert.FromBase64String(base64)
+        };
+    }
+}
