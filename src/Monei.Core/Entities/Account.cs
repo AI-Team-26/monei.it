@@ -8,8 +8,6 @@ public sealed class Account
 
     public string Username { get; set; } = string.Empty;
 
-    // NULL means "no password set" (login blocked until reset). Otherwise an Argon2id PHC
-    // string ($argon2id$v=19$m=...,t=...,p=...$salt$hash), never plain text.
     public string? Password { get; private set; }
 
     public bool PasswordResetRequired { get; set; }
@@ -24,14 +22,12 @@ public sealed class Account
 
     public Guid Guid { get; set; }
 
-    // Setting a password always clears the reset flag, so the two properties can't drift apart.
     public void SetPassword(string plainText)
     {
         Password = PasswordHelper.HashPassword(plainText);
         PasswordResetRequired = false;
     }
 
-    // A pending reset blocks login even if a valid hash is still stored; SetPassword clears the flag.
     public bool VerifyPassword(string plainText)
         => !PasswordResetRequired && PasswordHelper.VerifyPassword(Password, plainText);
 }
